@@ -39,9 +39,8 @@
 &lt;h3 id="12-information-collected-automatically"&gt;1.2 Information Collected Automatically&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;No Personal Data Collection by Us:&lt;/strong&gt; We do not directly collect, store, or transmit any personal information, user profiles, or usage tracking data.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Local Data Only:&lt;/strong&gt; The App caches parking availability data in your device&amp;rsquo;s local storage (localStorage on web, AsyncStorage on mobile) to improve performance. This data includes parking spot counts and timestamps from public sources and is never transmitted to our servers.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Local Data Only:&lt;/strong&gt; The App caches parking availability data in your device&amp;rsquo;s local storage (&lt;code&gt;localStorage&lt;/code&gt; on web, &lt;code&gt;AsyncStorage&lt;/code&gt; on mobile) to improve performance. This data includes parking spot counts and timestamps from publically avaiable sources and is never transmitted to our servers.&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;No Location Tracking:&lt;/strong&gt; The App does not request or collect your device location. Parking data shown is from public APIs and not personalized to your location.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;No Separate Analytics Services:&lt;/strong&gt; We do not use Google Analytics, Firebase Analytics, or similar app analytics services to track your behavior. However, AdMob (see below) does collect data for ad campaign performance and reporting.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h3 id="13-third-party-services"&gt;1.3 Third-Party Services&lt;/h3&gt;
 &lt;ul&gt;
