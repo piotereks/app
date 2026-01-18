@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Publish Site</title><link>https://piotereks.github.io/app/</link><description>Recent content on Publish Site</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://piotereks.github.io/app/index.xml" rel="self" type="application/rss+xml"/><item><title/><link>https://piotereks.github.io/app/free-parking/privacy_policy/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.github.io/app/free-parking/privacy_policy/</guid><description>&lt;h1 id="privacy-policy-for-free-parking-app"&gt;Privacy Policy for Free Parking App&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Effective Date:&lt;/strong&gt; January 18, 2026&lt;/p&gt;
+&lt;p&gt;This Privacy Policy describes how the Free Parking App (&amp;ldquo;we,&amp;rdquo; &amp;ldquo;us,&amp;rdquo; or &amp;ldquo;our&amp;rdquo;) collects, uses, and shares information when you use our mobile application (the &amp;ldquo;App&amp;rdquo;). By using the App, you agree to the collection and use of information in accordance with this policy.&lt;/p&gt;
+&lt;h2 id="1-information-we-collect"&gt;1. Information We Collect&lt;/h2&gt;
+&lt;h3 id="11-information-you-provide"&gt;1.1 Information You Provide&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;We do not require you to create an account or provide personal information to use the App.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="12-information-collected-automatically"&gt;1.2 Information Collected Automatically&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;No Personal Data Collection by Us:&lt;/strong&gt; We do not directly collect, store, or transmit any personal information, user profiles, or usage tracking data.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Local Data Only:&lt;/strong&gt; The App caches parking availability data in your device&amp;rsquo;s local storage (localStorage on web, AsyncStorage on mobile) to improve performance. This data includes parking spot counts and timestamps from public sources and is never transmitted to our servers.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;No Location Tracking:&lt;/strong&gt; The App does not request or collect your device location. Parking data shown is from public APIs and not personalized to your location.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;No Separate Analytics Services:&lt;/strong&gt; We do not use Google Analytics, Firebase Analytics, or similar app analytics services to track your behavior. However, AdMob (see below) does collect data for ad campaign performance and reporting.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="13-third-party-services"&gt;1.3 Third-Party Services&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;AdMob (Non-Personalized Ads with Campaign Analytics):&lt;/strong&gt; The mobile app displays advertisements through Google AdMob configured to show &lt;strong&gt;non-personalized ads only&lt;/strong&gt; (&lt;code&gt;requestNonPersonalizedAdsOnly: true&lt;/code&gt;). While ads are not personalized to you, AdMob does collect data for advertising purposes:
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;What AdMob Collects:&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;Device information (device type, OS version, screen size, language)&lt;/li&gt;
+&lt;li&gt;IP address (for general location, ad delivery, and fraud prevention)&lt;/li&gt;
+&lt;li&gt;Ad interactions (impressions, clicks, conversions)&lt;/li&gt;
+&lt;li&gt;App usage data related to ad performance&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;How AdMob Uses This Data:&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;Display non-personalized advertisements (not based on your interests or browsing history)&lt;/li&gt;
+&lt;li&gt;Campaign performance tracking and analytics&lt;/li&gt;
+&lt;li&gt;Ad fraud prevention and security&lt;/li&gt;
+&lt;li&gt;Aggregate reporting for advertisers&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Important:&lt;/strong&gt; Even though ads are non-personalized, Google collects analytics data to measure ad campaign effectiveness and improve ad services.&lt;/li&gt;
+&lt;li&gt;For more information, see &lt;a href="https://policies.google.com/privacy"&gt;Google&amp;rsquo;s Privacy Policy&lt;/a&gt; and &lt;a href="https://policies.google.com/technologies/partner-sites"&gt;How Google uses information from sites or apps that use our services&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Public Parking Data Sources:&lt;/strong&gt; The App fetches real-time parking availability from public APIs (zaparkuj.pl). This data is publicly available and contains no personal information. We do not control these third-party services.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="2-how-we-use-information"&gt;2. How We Use Information&lt;/h2&gt;
+&lt;p&gt;The App&amp;rsquo;s core functionality operates without collecting personal information:&lt;/p&gt;</description></item><item><title/><link>https://piotereks.github.io/app/static/indexx/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.github.io/app/static/indexx/</guid><description>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+ &lt;meta charset="UTF-8"&gt;
+ &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+ &lt;title&gt;Example Page&lt;/title&gt;
+ &lt;style&gt;
+ body {
+ font-family: Arial, sans-serif;
+ margin: 40px;
+ background-color: #f4f4f4;
+ }
+ h1 {
+ color: #333;
+ }
+ p {
+ color: #666;
+ }
+ &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+ &lt;h1&gt;Welcome to the Example Page&lt;/h1&gt;
+ &lt;p&gt;This is a sample HTML file generated for the publish folder. It can be used to test GitHub Pages deployment.&lt;/p&gt;
+ &lt;p&gt;If you're seeing this, the deployment worked!&lt;/p&gt; 
+&lt;/body&gt;
+&lt;/html&gt;</description></item></channel></rss>
