@@ -1,4 +1,4 @@
-baseURL = 'https://piotereks.github.io/app'
+baseURL = 'https://piotereks.github.io/app/'
 languageCode = 'en-us'
 title = 'Publish Site'
  
