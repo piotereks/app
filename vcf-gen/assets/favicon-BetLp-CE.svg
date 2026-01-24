@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="12" fill="#fff"/>
-  <!-- 'SPAM' will be rendered last for foreground -->
-  <text x="32" y="44" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" dominant-baseline="middle">👹</text>
-  <polygon points="33,12 36.6,24.4 34.5,24.4 38.5,34.2 31,27 33.6,27 29,17.4" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.2"/>
-  <text x="32" y="18" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#000">SPAM</text>
-</svg>
