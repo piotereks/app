@@ -22,9 +22,10 @@
         header {
             background-color: #272822;
             color: #a6e22e;
-            padding: 20px;
+            padding: 8px;
             text-align: center;
             font-size: 2em;
+			line-height: 1;
             border-bottom: 2px solid #75715e;
         }
         .navbar {
@@ -35,11 +36,11 @@
         .navbar .container {
             display: flex;
             justify-content: center;
-            padding: 14px 20px;
+            padding: 6px 10px;
         }
         .navbar .navbar-item {
             color: #f8f8f2;
-            padding: 14px 20px;
+            padding: 6px 12px;
             text-decoration: none;
         }
         .navbar .navbar-item:hover {
@@ -48,8 +49,10 @@
         }
         .container {
             flex: 1;
-            padding: 20px;
+            padding: 0;
             position: relative;
+            overflow: hidden;
+            min-height: 0;
         }
         #GrampsHeatmap {
             position: absolute;
@@ -59,12 +62,20 @@
             height: 100%;
         }
         .footer {
-            background-color: #272822;
+            background-color: rgba(39, 40, 34, 0.3);
             color: #f8f8f2;
             text-align: center;
-            padding: 10px;
-            position: relative;
-            border-top: 2px solid #75715e;
+            padding: 0;
+            line-height: 1.2;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 2px solid rgba(117, 113, 94, 0.3);
+            z-index: 1000;
+        }
+        .footer p {
+            margin: 4px 0;
         }
     </style>
 </head>
@@ -78,11 +89,11 @@
     <div class="container">
         <div class="navbar-menu">
             <div class="navbar-end">
-                <a href="#" class="navbar-item" onclick="scrollToContent()">Home</a>
-                <a href="./AncestralCollapsible/renamed_AncestralCollapsible.html" class="navbar-item" target="_self">Proste Drzewo Sakowskich</a>
-                <a href="https://pewu.github.io/topola-viewer/#/view?c=g&gen=-1&i=h&indi=I0004&s=s&url=https%3A%2F%2Fpiotereks.top%2Fgenealogy%2FSakowski_filtered.ged" class="navbar-item" target="_self">Całe Drzewo Sakowskich</a>
-                <a href="./Sakowski_dynamicweb/tree_svg.html?p=person.html&idx=178&ndx=34" class="navbar-item" target="_self">Portal genealogiczny rodziny Sakowskich</a>
-                <a href="./Sakowski_heatmap.html" class="navbar-item" target="_self">Mapa rodziny Sakowskich</a>
+                <a href="#" class="navbar-item" onclick="resetToHome(); return false;">Mapa</a>
+                <a href="#" class="navbar-item" onclick="loadInIframe('./AncestralCollapsible/renamed_AncestralCollapsible.html'); return false;">Proste Drzewo</a>
+                <a href="#" class="navbar-item" onclick="loadInIframe('https://pewu.github.io/topola-viewer/#/view?c=g&gen=-1&i=h&indi=I0004&s=s&url=https%3A%2F%2Fpiotereks.top%2Fgenealogy%2FSakowski_filtered.ged'); return false;">Całe Drzewo</a>
+                <a href="#" class="navbar-item" onclick="loadInIframe('./Sakowski_dynamicweb/tree_svg.html?p=person.html&idx=178&ndx=34'); return false;">Portal Genealogiczny</a>
+                <!-- <a href="#" class="navbar-item" onclick="loadInIframe('./Sakowski_heatmap.html'); return false;">Mapa rodziny Sakowskich</a> -->
             </div>
         </div>
     </div>
@@ -145,29 +156,51 @@
         ).addTo(GrampsHeatmap);
     </script>
 <script>
-function loadContent(url) {
+function resetToHome() {
   var container = document.getElementById('content');
-  var xhr = new XMLHttpRequest();
-
-  xhr.onreadystatechange = function() { 
-    if (xhr.readyState == 4 && xhr.status == 200) {
-      // Create a new div element
-      var newDiv = document.createElement('div');
-      newDiv.innerHTML = xhr.responseText;
-
-      // Replace the old inner div with the new one
-      var oldInnerDiv = container.querySelector('.inner-div');
-      if (oldInnerDiv) {
-        container.replaceChild(newDiv, oldInnerDiv);
-      } else {
-        container.appendChild(newDiv);
-      }
+  container.innerHTML = '<div id="GrampsHeatmap"></div>';
+  
+  // Reinitialize the heatmap
+  var GrampsHeatmap = L.map(
+    'GrampsHeatmap',
+    {
+      center: [START_LAT, START_LON],
+      crs: L.CRS.EPSG3857,
+      zoom: START_ZOOM,
+      zoomControl: true,
+      preferCanvas: false,
     }
-  };
+  );
 
-  xhr.open("GET", url, true);
-  xhr.setRequestHeader('Content-type', 'text/html');
-  xhr.send();
+  L.tileLayer(
+    MAP_TILES_URL,
+    {
+      "attribution": MAP_TILES_ATTRIBUTION,
+      "detectRetina": false,
+      "maxNativeZoom": 18,
+      "maxZoom": 18,
+      "minZoom": 0,
+      "noWrap": false,
+      "opacity": 1,
+      "subdomains": "abc", "tms": false
+    }
+  ).addTo(GrampsHeatmap);
+
+  L.heatLayer(
+    HEATMAP_DATA,
+    {
+      "blur": 15,
+      "max": 43,
+      "maxZoom": 18,
+      "minOpacity": 0.5,
+      "radius": HEATMAP_RADIUS
+    }
+  ).addTo(GrampsHeatmap);
+}
+
+function loadInIframe(url) {
+  var container = document.getElementById('content');
+  container.innerHTML = '<iframe src="' + url + '" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; display:block;"></iframe>';
 }
 </script>
 </body>
