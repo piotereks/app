@@ -7,9 +7,9 @@
 &lt;/ul&gt;
 &lt;h3 id="tooling--stack"&gt;Tooling &amp;amp; Stack&lt;/h3&gt;
 &lt;ul&gt;
-&lt;li&gt;Languages I reach for daily: Python for data wrangling and automation, JavaScript/TypeScript for UI glue, and the occasional Bash script when Linux nostalgia from the 90s kicks in.&lt;/li&gt;
-&lt;li&gt;Frameworks and libraries: React, React Native, Vite, Tailwind, and a rotating cast of testing libraries (Jest, Playwright, Vitest) depending on the project.&lt;/li&gt;
-&lt;li&gt;Data work: SQLite and Postgres for persistence, a pile of APIs, and custom cache layers when latency matters.&lt;/li&gt;
+&lt;li&gt;Languages I reach for daily: Python for data wrangling and automation, JavaScript/React for UI glue, and the Bash script when Linux nostalgia from the 90s kicks in or when cicd pipeline needs to be done.&lt;/li&gt;
+&lt;li&gt;Frameworks and libraries: React, React Native, Vite, Tailwind.&lt;/li&gt;
+&lt;li&gt;Data work: SQLite and Postgres for persistence, a pile of APIs, and custom cache layers when latency matters. I know Oracle very well.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;You can browse more experiments and utilities in my GitHub repos at &lt;a href="https://github.com/piotereks"&gt;https://github.com/piotereks&lt;/a&gt; — everything from ESP dictionary helpers to VCF generators lives there.&lt;/p&gt;</description></item><item><title>Privacy</title><link>https://piotereks.top/privacy/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/privacy/</guid><description>&lt;p&gt;SYI runs as a small, static site powered by Hugo. The goal is to keep tracking light while still understanding if the tools stay online. This page explains what data the site touches and how you can ask questions.&lt;/p&gt;
 &lt;h2 id="cookies-and-ads"&gt;Cookies and Ads&lt;/h2&gt;
@@ -34,7 +34,6 @@
 &lt;h2 id="contact-and-requests"&gt;Contact and Requests&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;Email privacy questions or removal requests to &lt;a href="mailto:piotr@piotereks.top"&gt;piotr@piotereks.top&lt;/a&gt;.&lt;/li&gt;
-&lt;li&gt;For bug reports, open an issue at &lt;a href="https://github.com/piotereks/dev"&gt;https://github.com/piotereks/dev&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;If you prefer LinkedIn, reach me at &lt;a href="https://www.linkedin.com/in/piotrsakowski/"&gt;https://www.linkedin.com/in/piotrsakowski/&lt;/a&gt;.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;I may update this page when I add new integrations or analytics. Check the Git history in the same repo for previous versions.&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;I may update this page when I add new integrations or analytics.&lt;/p&gt;</description></item></channel></rss>
