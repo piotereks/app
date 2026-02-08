@@ -1,58 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SYI Projects on PioterekS</title><link>https://piotereks.top/</link><description>Recent content in SYI Projects on PioterekS</description><generator>Hugo</generator><language>en</language><atom:link href="https://piotereks.top/index.xml" rel="self" type="application/rss+xml"/><item><title/><link>https://piotereks.top/demo-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/demo-form/</guid><description>&lt;h1 id="hugo-theme-m10c-formatting-guide"&gt;Hugo Theme M10c Formatting Guide&lt;/h1&gt;
-&lt;p&gt;The &lt;code&gt;hugo-theme-m10c&lt;/code&gt; is a minimalist theme for Hugo, designed for simplicity and readability. It supports various formatting elements to help you create well-structured and visually appealing content. Below is a guide to the formatting options available in this theme.&lt;/p&gt;
-&lt;h2 id="basic-formatting-elements"&gt;Basic Formatting Elements&lt;/h2&gt;
-&lt;h3 id="1-headings"&gt;1. &lt;strong&gt;Headings&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;Use &lt;code&gt;#&lt;/code&gt; for headings. The number of &lt;code&gt;#&lt;/code&gt; symbols determines the heading level.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-markdown" data-lang="markdown"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;# Heading 1
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;## Heading 2
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;### Heading 3
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;#### Heading 4
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;##### Heading 5
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;###### Heading 6
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="2-paragraphs"&gt;2. &lt;strong&gt;Paragraphs&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;Simply write text on a new line to create a paragraph. Leave a blank line between paragraphs.&lt;/p&gt;</description></item><item><title/><link>https://piotereks.top/demo-mix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/demo-mix/</guid><description>&lt;h1 id="hugo-theme-m10c-formatting-guide-mixed-definitions--rendered-examples"&gt;Hugo Theme M10c Formatting Guide (Mixed: Definitions + Rendered Examples)&lt;/h1&gt;
-&lt;p&gt;This document provides a comprehensive guide to the formatting options supported by the &lt;code&gt;hugo-theme-m10c&lt;/code&gt;, combining both definitions and rendered examples for clarity.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h2 id="1-headings"&gt;1. &lt;strong&gt;Headings&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Headings are created using &lt;code&gt;#&lt;/code&gt; symbols. The number of &lt;code&gt;#&lt;/code&gt; symbols determines the heading level.&lt;/p&gt;
-&lt;h3 id="definition"&gt;Definition:&lt;/h3&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-markdown" data-lang="markdown"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;# Heading 1
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;## Heading 2
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;### Heading 3
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;#### Heading 4
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;##### Heading 5
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;###### Heading 6
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="rendered-example"&gt;Rendered Example:&lt;/h3&gt;
-&lt;h1 id="heading-1"&gt;Heading 1&lt;/h1&gt;
-&lt;h2 id="heading-2"&gt;Heading 2&lt;/h2&gt;
-&lt;h3 id="heading-3"&gt;Heading 3&lt;/h3&gt;
-&lt;h4 id="heading-4"&gt;Heading 4&lt;/h4&gt;
-&lt;h5 id="heading-5"&gt;Heading 5&lt;/h5&gt;
-&lt;h6 id="heading-6"&gt;Heading 6&lt;/h6&gt;
-&lt;hr&gt;
-&lt;h2 id="2-paragraphs"&gt;2. &lt;strong&gt;Paragraphs&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Paragraphs are created by writing text on a new line. Leave a blank line between paragraphs.&lt;/p&gt;</description></item><item><title/><link>https://piotereks.top/demo-rend/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/demo-rend/</guid><description>&lt;h1 id="hugo-theme-m10c-formatting-guide-with-rendered-examples"&gt;Hugo Theme M10c Formatting Guide with Rendered Examples&lt;/h1&gt;
-&lt;p&gt;The &lt;code&gt;hugo-theme-m10c&lt;/code&gt; is a minimalist theme for Hugo, designed for simplicity and readability. Below is a guide to the formatting options available in this theme, along with rendered examples.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h2 id="1-headings"&gt;1. &lt;strong&gt;Headings&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Use &lt;code&gt;#&lt;/code&gt; for headings. The number of &lt;code&gt;#&lt;/code&gt; symbols determines the heading level.&lt;/p&gt;
-&lt;h3 id="syntax"&gt;Syntax:&lt;/h3&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-markdown" data-lang="markdown"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;# Heading 1
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;## Heading 2
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;### Heading 3
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;#### Heading 4
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;##### Heading 5
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;###### Heading 6
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="rendered-example"&gt;Rendered Example:&lt;/h3&gt;
-&lt;h1 id="heading-1"&gt;Heading 1&lt;/h1&gt;
-&lt;h2 id="heading-2"&gt;Heading 2&lt;/h2&gt;
-&lt;h3 id="heading-3"&gt;Heading 3&lt;/h3&gt;
-&lt;h4 id="heading-4"&gt;Heading 4&lt;/h4&gt;
-&lt;h5 id="heading-5"&gt;Heading 5&lt;/h5&gt;
-&lt;h6 id="heading-6"&gt;Heading 6&lt;/h6&gt;
-&lt;hr&gt;
-&lt;h2 id="2-paragraphs"&gt;2. &lt;strong&gt;Paragraphs&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Simply write text on a new line to create a paragraph. Leave a blank line between paragraphs.&lt;/p&gt;</description></item><item><title>About</title><link>https://piotereks.top/about/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/about/</guid><description>&lt;p&gt;Hi, I’m Piotr Sakowski (PioterekS) — a developer who prefers building practical tools over leaving ideas in notebooks. I split my time between crafting web utilities, integrating data feeds, and maintaining the small projects that power this site.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SYI Projects on PioterekS</title><link>https://piotereks.top/</link><description>Recent content in SYI Projects on PioterekS</description><generator>Hugo</generator><language>en</language><atom:link href="https://piotereks.top/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>https://piotereks.top/about/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/about/</guid><description>&lt;p&gt;Hi, I’m Piotr Sakowski (PioterekS) — a developer who prefers building practical tools over leaving ideas in notebooks. I split my time between crafting web utilities, integrating data feeds, and maintaining the small projects that power this site.&lt;/p&gt;
 &lt;hr&gt;
 &lt;blockquote&gt;
 &lt;p&gt;&lt;strong&gt;✨ Linux Rules the World ✨&lt;/strong&gt;&lt;br&gt;
@@ -88,12 +34,22 @@
 &lt;h2 id="data-accuracy-disclaimer"&gt;Data Accuracy Disclaimer&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;Sensor data, dictionaries, and genealogy records come from third parties. I cannot guarantee accuracy or freshness. Treat the results as informational only and verify before making important decisions.&lt;/li&gt;
-&lt;li&gt;For example, parking data is sourced from [Provider Name], and dictionary data is sourced from [Provider Name].&lt;/li&gt;
+&lt;li&gt;For example, parking data is sourced from Green Day and University APIs, and dictionary data is sourced from RAE and WordReference.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id="contact-and-requests"&gt;Contact and Requests&lt;/h2&gt;
 &lt;ul&gt;
-&lt;li&gt;Email privacy questions or removal requests to &lt;a href="mailto:piotr@piotereks.top"&gt;piotr@piotereks.top&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Email privacy questions or removal requests to &lt;a href="mailto:piotereks@gmail.com"&gt;piotereks@gmail.com&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;If you prefer LinkedIn, reach me at &lt;a href="https://www.linkedin.com/in/piotrsakowski/"&gt;https://www.linkedin.com/in/piotrsakowski/&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;I aim to respond to inquiries within 5 business days.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;I may update this page when I add new integrations or analytics.&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;I may update this page when I add new integrations or analytics.&lt;/p&gt;</description></item><item><title>Terms and Conditions</title><link>https://piotereks.top/terms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/terms/</guid><description>&lt;p&gt;&lt;strong&gt;Effective Date:&lt;/strong&gt; 2026-02-08&lt;/p&gt;
+&lt;h2 id="1-introduction"&gt;1. Introduction&lt;/h2&gt;
+&lt;p&gt;Welcome to SYI (Simple Yet Important utilities). By accessing or using this website and its tools (including Free Parking, Esp-Dict, VCF Generator, and Genealogia), you agree to be bound by these Terms and Conditions.&lt;/p&gt;
+&lt;h2 id="2-disclaimer-of-warranties"&gt;2. Disclaimer of Warranties&lt;/h2&gt;
+&lt;p&gt;The services and information on this site are provided on an &amp;ldquo;as is&amp;rdquo; and &amp;ldquo;as available&amp;rdquo; basis.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Parking Data:&lt;/strong&gt; We do not guarantee the accuracy, timeliness, or completeness of parking availability data. This data is aggregated from third-party sources (Green Day, University API) and may be delayed or incorrect. Do not rely solely on this app for critical parking decisions.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Dictionary &amp;amp; Genealogy:&lt;/strong&gt; Definitions and historical records are for informational purposes only.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="3-limitation-of-liability"&gt;3. Limitation of Liability&lt;/h2&gt;
+&lt;p&gt;To the fullest extent permitted by law, Piotr Sakowski (the site owner) shall not be liable for any damages, losses, or expenses arising from your use of these tools. This includes, but is not limited to:&lt;/p&gt;</description></item></channel></rss>
