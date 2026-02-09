@@ -1,1 +1,11 @@
+# robots.txt — block /genealogy/ for all crawlers except AdSense
+# Allow AdSense crawlers (AdsBot-Google and Mediapartners-Google)
+User-agent: AdsBot-Google
+Allow: /genealogy/
+
+User-agent: Mediapartners-Google
+Allow: /genealogy/
+
+# All other crawlers are disallowed from the genealogy folder
 User-agent: *
+Disallow: /genealogy/
