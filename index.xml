@@ -33,7 +33,7 @@
 &lt;/ul&gt;
 &lt;h2 id="data-accuracy-disclaimer"&gt;Data Accuracy Disclaimer&lt;/h2&gt;
 &lt;ul&gt;
-&lt;li&gt;Sensor data, dictionaries, and genealogy records come from third parties. I cannot guarantee accuracy or freshness. Treat the results as informational only and verify before making important decisions.&lt;/li&gt;
+&lt;li&gt;Sensor data, and dictionaries records come from third parties. I cannot guarantee accuracy or freshness. Treat the results as informational only and verify before making important decisions.&lt;/li&gt;
 &lt;li&gt;For example, parking data is sourced from Green Day and University APIs, and dictionary data is sourced from RAE and WordReference.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id="contact-and-requests"&gt;Contact and Requests&lt;/h2&gt;
@@ -43,12 +43,12 @@
 &lt;/ul&gt;
 &lt;p&gt;I may update this page when I add new integrations or analytics.&lt;/p&gt;</description></item><item><title>Terms and Conditions</title><link>https://piotereks.top/terms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/terms/</guid><description>&lt;p&gt;&lt;strong&gt;Effective Date:&lt;/strong&gt; 2026-02-08&lt;/p&gt;
 &lt;h2 id="1-introduction"&gt;1. Introduction&lt;/h2&gt;
-&lt;p&gt;Welcome to SYI (Simple Yet Important utilities). By accessing or using this website and its tools (including Free Parking, Esp-Dict, VCF Generator, and Genealogia), you agree to be bound by these Terms and Conditions.&lt;/p&gt;
+&lt;p&gt;Welcome to SYI (Simple Yet Important utilities). By accessing or using this website and its tools (including Free Parking, Esp-Dict, and VCF Generator), you agree to be bound by these Terms and Conditions.&lt;/p&gt;
 &lt;h2 id="2-disclaimer-of-warranties"&gt;2. Disclaimer of Warranties&lt;/h2&gt;
 &lt;p&gt;The services and information on this site are provided on an &amp;ldquo;as is&amp;rdquo; and &amp;ldquo;as available&amp;rdquo; basis.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Parking Data:&lt;/strong&gt; We do not guarantee the accuracy, timeliness, or completeness of parking availability data. This data is aggregated from third-party sources (Green Day, University API) and may be delayed or incorrect. Do not rely solely on this app for critical parking decisions.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Dictionary &amp;amp; Genealogy:&lt;/strong&gt; Definitions and historical records are for informational purposes only.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Dictionary:&lt;/strong&gt; Definitions and historical records are for informational purposes only.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id="3-limitation-of-liability"&gt;3. Limitation of Liability&lt;/h2&gt;
 &lt;p&gt;To the fullest extent permitted by law, Piotr Sakowski (the site owner) shall not be liable for any damages, losses, or expenses arising from your use of these tools. This includes, but is not limited to:&lt;/p&gt;</description></item></channel></rss>
