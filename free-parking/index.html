@@ -16,6 +16,18 @@
 
 <body>
   <div id="root"></div>
+  <script>
+    function isAndroid() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      return /Android/i.test(ua);
+    }
+
+    if (isAndroid()) {
+      window.location.href =
+        'https://play.google.com/store/apps/details?id=app.piotereks.freeparking';
+    }
+  </script>
+
 </body>
 
 </html>
