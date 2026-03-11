@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Parking Monitor</title>
   <link rel="icon" type="image/png" href="./assets/parking_favicon.png" />
-  <script type="module" crossorigin src="/free-parking-dev/assets/index-DGTw2ySh.js"></script>
+  <script type="module" crossorigin src="/free-parking-dev/assets/index-De8A69kK.js"></script>
   <link rel="modulepreload" crossorigin href="/free-parking-dev/assets/vendor-echarts-nZu8rBDa.js">
   <link rel="modulepreload" crossorigin href="/free-parking-dev/assets/vendor-react-BVyvVbwp.js">
   <link rel="modulepreload" crossorigin href="/free-parking-dev/assets/vendor-utils-F0zOxUcV.js">
@@ -22,7 +22,13 @@
       return /Android/i.test(ua);
     }
 
-    if (isAndroid()) {
+    function hasDevParam() {
+      return new URLSearchParams(window.location.search).has('dev');
+    }
+
+    if (hasDevParam()) {
+      document.title = 'Parking Monitor DEV';
+    } else if (isAndroid()) {
       window.location.href =
         'https://play.google.com/store/apps/details?id=app.piotereks.freeparking';
     }
