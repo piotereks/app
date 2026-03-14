@@ -1,39 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Parking Monitor</title>
+    <link rel="icon" type="image/png" href="./assets/parking_favicon.png" />
+    <script type="module" crossorigin src="/free-parking/assets/index-CrZi5flt.js"></script>
+    <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-echarts-nZu8rBDa.js">
+    <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-react-BVyvVbwp.js">
+    <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-utils-F0zOxUcV.js">
+    <link rel="stylesheet" crossorigin href="/free-parking/assets/index-CicZ---3.css">
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <title>Parking Monitor</title>
-  <link rel="icon" type="image/png" href="./assets/parking_favicon.png" />
-  <script type="module" crossorigin src="/free-parking/assets/index-5Bv8kY9N.js"></script>
-  <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-echarts-nZu8rBDa.js">
-  <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-react-BVyvVbwp.js">
-  <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-utils-F0zOxUcV.js">
-  <link rel="stylesheet" crossorigin href="/free-parking/assets/index-C_-bFmhP.css">
-</head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (function () {
+        function isAndroid() {
+          const ua = navigator.userAgent || navigator.vendor || window.opera;
+          return /Android/i.test(ua);
+        }
 
-<body>
-  <div id="root"></div>
-  <script>
-    function isAndroid() {
-      const ua = navigator.userAgent || navigator.vendor || window.opera;
-      return /Android/i.test(ua);
-    }
+        function getParam(name) {
+          return new URLSearchParams(window.location.search).get(name);
+        }
 
-    function hasDevParam() {
-      return new URLSearchParams(window.location.search).has('dev');
-    }
+        function hasDevMode() {
+          const v = getParam('dev');
+          return v !== null && v !== 'false' && v !== '0';
+        }
 
-    if (hasDevParam()) {
-      document.title = 'Parking Monitor DEV';
-    } else if (isAndroid()) {
-      window.location.href =
-        'https://play.google.com/store/apps/details?id=app.piotereks.freeparking';
-    }
-  </script>
+        function hasShowInfo() {
+          const v = getParam('showInfo');
+          return v !== null && v !== 'false' && v !== '0';
+        }
 
-</body>
+        function runRedirectChecks() {
+          if (hasDevMode()) {
+            document.title = 'Parking Monitor DEV';
+          } else if (isAndroid()) {
+            window.location.href =
+              'https://play.google.com/store/apps/details?id=app.piotereks.freeparking';
+          }
+        }
 
+        document.addEventListener('DOMContentLoaded', () => {
+          const KEY = 'parking_info_seen';
+          const forceShow = hasShowInfo();
+
+          if (!forceShow && localStorage.getItem(KEY)) {
+            runRedirectChecks();
+            return;
+          }
+
+          // Create modal
+          const modal = document.createElement('div');
+          modal.style.position = 'fixed';
+          modal.style.inset = '0';
+          modal.style.background = 'rgba(0,0,0,0.5)';
+          modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          modal.style.zIndex = '9999';
+
+          const card = document.createElement('div');
+          card.style.background = '#fff';
+          card.style.color = '#111';
+          card.style.opacity = '1';
+          card.style.filter = 'none';
+          card.style.transition = 'none';
+          card.style.padding = '20px';
+          card.style.borderRadius = '8px';
+          card.style.maxWidth = '480px';
+          card.style.width = '90%';
+          card.style.boxSizing = 'border-box';
+          card.innerHTML = `
+            <h2 style="margin:0 0 8px">Welcome to Parking Monitor</h2>
+            <p style="margin:0 0 12px">My name is <strong>Piotr Sakowski</strong>. I created this app for <strong>You</strong> to make parking availability check easier and more reliable.</p>
+            <p style="margin:0 0 12px">
+             This app indicates whether the data is <strong>actual</strong>, includes a <strong><span style="white-space:nowrap">2-day history</span></strong>, and helps <strong>predict</strong> the best time to arrive at the office next time. <br/>Something the <span style="text-decoration:underline">original page fails to provide</span>.</p>
+            <p style="margin:0 0 12px">If you find this app useful you can buy me coffee: <a href="https://buycoffee.to/piotereks" target="_blank" rel="noopener noreferrer" style="color:#b5651d;text-decoration:underline;font-weight:500" aria-label="Buy me a coffee (opens in new tab)">buycoffee.to/piotereks</a></p>
+            <p style="margin:0 0 16px">Tap <strong>Continue</strong> to proceed.</p>
+            <div style="text-align:right">
+              <button id="fp-continue" style="padding:8px 12px"><strong>&gt;Continue</strong></button>
+            </div>
+          `;
+
+          modal.appendChild(card);
+          document.body.appendChild(modal);
+          document.body.style.overflow = 'hidden';
+
+          document.getElementById('fp-continue').addEventListener('click', () => {
+            try { localStorage.setItem(KEY, '1'); } catch (e) {}
+            if (modal.parentNode) modal.parentNode.removeChild(modal);
+            document.body.style.overflow = '';
+            runRedirectChecks();
+          });
+        });
+      })();
+    </script>
+
+  </body>
 </html>
