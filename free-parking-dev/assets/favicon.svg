@@ -1,0 +1,33 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="512"
+  height="512"
+>
+  <!-- Background rounded square -->
+  <rect
+    x="32"
+    y="32"
+    width="448"
+    height="448"
+    rx="96"
+    ry="96"
+    fill="#1565C0"
+  />
+
+  <!-- Letter P from font with stroke -->
+  <text
+    x="50%" 
+    y="55%" 
+    fill="#FFFFFF"
+    stroke="#0D47A1"
+    stroke-width="0.5"
+    font-family="Arial, sans-serif"
+    font-weight="bold"
+    font-size="448"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >
+    P
+  </text>
+</svg>
