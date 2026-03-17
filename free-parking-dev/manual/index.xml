@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Free Parking Monitor – User Manual on My New Hugo Site</title><link>https://example.org/free-parking/manual/</link><description>Recent content in Free Parking Monitor – User Manual on My New Hugo Site</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://example.org/free-parking/manual/index.xml" rel="self" type="application/rss+xml"/><item><title>Dashboard</title><link>https://example.org/free-parking/manual/dashboard/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://example.org/free-parking/manual/dashboard/</guid><description>&lt;p&gt;The Dashboard is the default screen when you open the app. It shows real-time free parking space counts for both monitored locations.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Free Parking Monitor – User Manual on My New Hugo Site</title><link>https://piotereks.top/free-parking/manual/</link><description>Recent content in Free Parking Monitor – User Manual on My New Hugo Site</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://piotereks.top/free-parking/manual/index.xml" rel="self" type="application/rss+xml"/><item><title>Dashboard</title><link>https://piotereks.top/free-parking/manual/dashboard/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/manual/dashboard/</guid><description>&lt;p&gt;The Dashboard is the default screen when you open the app. It shows real-time free parking space counts for both monitored locations.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2 id="parking-cards"&gt;Parking Cards&lt;/h2&gt;
 &lt;p&gt;Each location is shown as a &lt;strong&gt;parking card&lt;/strong&gt; containing:&lt;/p&gt;
@@ -33,7 +33,7 @@
  &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h3 id="data-age-colour-coding"&gt;Data Age Colour Coding&lt;/h3&gt;
-&lt;p&gt;The free-spaces number changes colour based on how fresh the data is:&lt;/p&gt;</description></item><item><title>Statistics</title><link>https://example.org/free-parking/manual/statistics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://example.org/free-parking/manual/statistics/</guid><description>&lt;h1 id="statistics"&gt;Statistics&lt;/h1&gt;
+&lt;p&gt;The free-spaces number changes colour based on how fresh the data is:&lt;/p&gt;</description></item><item><title>Statistics</title><link>https://piotereks.top/free-parking/manual/statistics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/manual/statistics/</guid><description>&lt;h1 id="statistics"&gt;Statistics&lt;/h1&gt;
 &lt;p&gt;The Statistics screen shows a time-series chart of historical parking availability for both GreenDay and Uni Wroc.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2 id="chart-overview"&gt;Chart Overview&lt;/h2&gt;
@@ -70,7 +70,7 @@
 &lt;/ul&gt;
 &lt;hr&gt;
 &lt;h2 id="colour-palette-selector"&gt;Colour Palette Selector&lt;/h2&gt;
-&lt;p&gt;The &lt;strong&gt;Palette&lt;/strong&gt; selector in the header (visible on wider screens) lets you choose from four built-in colour schemes:&lt;/p&gt;</description></item><item><title>Settings</title><link>https://example.org/free-parking/manual/settings/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://example.org/free-parking/manual/settings/</guid><description>&lt;p&gt;The Settings screen lets you personalise the Free Parking Monitor app and get support.&lt;/p&gt;
+&lt;p&gt;The &lt;strong&gt;Palette&lt;/strong&gt; selector in the header (visible on wider screens) lets you choose from four built-in colour schemes:&lt;/p&gt;</description></item><item><title>Settings</title><link>https://piotereks.top/free-parking/manual/settings/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/manual/settings/</guid><description>&lt;p&gt;The Settings screen lets you personalise the Free Parking Monitor app and get support.&lt;/p&gt;
 &lt;p&gt;Navigate to Settings by clicking &lt;strong&gt;⚙️ Settings&lt;/strong&gt; in the header from any screen.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2 id="sections"&gt;Sections&lt;/h2&gt;
