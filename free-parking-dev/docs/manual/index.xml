@@ -30,6 +30,10 @@
  &lt;td&gt;&lt;strong&gt;Data age&lt;/strong&gt;&lt;/td&gt;
  &lt;td&gt;Small text showing how fresh the data is (e.g. &lt;code&gt;2m ago&lt;/code&gt;, &lt;code&gt;just now&lt;/code&gt;)&lt;/td&gt;
  &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;&lt;strong&gt;Approximation active hours&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;Active only on weekdays (Mon–Fri) between 05:00 and 21:00 local time.&lt;/td&gt;
+ &lt;/tr&gt;
  &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h3 id="data-age-colour-coding"&gt;Data Age Colour Coding&lt;a class="anchor" href="#data-age-colour-coding"&gt;#&lt;/a&gt;&lt;/h3&gt;
