@@ -35,8 +35,12 @@
         }
 
         function hasDevMode() {
-          const v = getParam('dev');
-          return v !== null && v !== 'false' && v !== '0';
+          const params = new URLSearchParams(window.location.search);
+          // Accept presence of `?dev` (no value) or `?dev=...` unless explicitly
+          // set to false/0. This makes `?dev` behave as a truthy flag.
+          if (!params.has('dev')) return false;
+          const v = params.get('dev');
+          return v === null || v === '' || (v !== 'false' && v !== '0');
         }
 
         function hasShowInfo() {
