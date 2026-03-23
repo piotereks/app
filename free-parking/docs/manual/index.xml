@@ -1,5 +1,15 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Free Parking Monitor – User Manual on Free Parking Monitor</title><link>https://piotereks.top/free-parking/docs/manual/</link><description>Recent content in Free Parking Monitor – User Manual on Free Parking Monitor</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://piotereks.top/free-parking/docs/manual/index.xml" rel="self" type="application/rss+xml"/><item><title>Dashboard</title><link>https://piotereks.top/free-parking/docs/manual/dashboard/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/docs/manual/dashboard/</guid><description>&lt;p&gt;The Dashboard is the default screen when you open the app. It shows real-time free parking space counts for both monitored locations.&lt;/p&gt;
-&lt;!-- raw HTML omitted --&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Free Parking Monitor – User Manual on Free Parking Monitor</title><link>https://piotereks.top/free-parking/docs/manual/</link><description>Recent content in Free Parking Monitor – User Manual on Free Parking Monitor</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://piotereks.top/free-parking/docs/manual/index.xml" rel="self" type="application/rss+xml"/><item><title>Dashboard</title><link>https://piotereks.top/free-parking/docs/manual/dashboard/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/docs/manual/dashboard/</guid><description>&lt;h1 id="dashboard"&gt;Dashboard&lt;a class="anchor" href="#dashboard"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The Dashboard is the default screen when you open the app. It shows real-time free parking space counts for both monitored locations.&lt;/p&gt;
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/dashboard_annotated.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Dashboard — light mode with labelled sections&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/dashboard_dark.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Dashboard — dark mode&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
 &lt;hr&gt;
 &lt;h2 id="header--navigation-bar"&gt;Header / Navigation Bar&lt;a class="anchor" href="#header--navigation-bar"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;The header at the top of every screen contains the app title and four action buttons:&lt;/p&gt;
@@ -35,9 +45,19 @@
 &lt;/table&gt;
 &lt;hr&gt;
 &lt;h2 id="parking-cards"&gt;Parking Cards&lt;a class="anchor" href="#parking-cards"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;Each location is shown as a &lt;strong&gt;parking card&lt;/strong&gt; containing:&lt;/p&gt;</description></item><item><title>Settings</title><link>https://piotereks.top/free-parking/docs/manual/settings/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/docs/manual/settings/</guid><description>&lt;p&gt;The Settings screen lets you personalise the Free Parking Monitor app and get support.&lt;/p&gt;
+&lt;p&gt;Each location is shown as a &lt;strong&gt;parking card&lt;/strong&gt; containing:&lt;/p&gt;</description></item><item><title>Settings</title><link>https://piotereks.top/free-parking/docs/manual/settings/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/docs/manual/settings/</guid><description>&lt;h1 id="settings"&gt;Settings&lt;a class="anchor" href="#settings"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The Settings screen lets you personalise the Free Parking Monitor app and get support.&lt;/p&gt;
 &lt;p&gt;Navigate to Settings by clicking &lt;strong&gt;⚙️ Settings&lt;/strong&gt; in the header from any screen.&lt;/p&gt;
-&lt;!-- raw HTML omitted --&gt;
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/settings_annotated.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Settings — light mode with labelled sections&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/settings_dark.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Settings — dark mode&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
 &lt;hr&gt;
 &lt;h2 id="sections"&gt;Sections&lt;a class="anchor" href="#sections"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;h3 id="app-info"&gt;App Info&lt;a class="anchor" href="#app-info"&gt;#&lt;/a&gt;&lt;/h3&gt;
@@ -71,8 +91,18 @@
  &lt;/tr&gt;
  &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;p&gt;&lt;strong&gt;System mode&lt;/strong&gt; automatically follows your operating system&amp;rsquo;s dark/light preference and updates in real time if you change the OS setting.&lt;/p&gt;</description></item><item><title>Statistics</title><link>https://piotereks.top/free-parking/docs/manual/statistics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/docs/manual/statistics/</guid><description>&lt;p&gt;The Statistics screen shows a time-series chart of historical parking availability for both GreenDay and Uni Wroc.&lt;/p&gt;
-&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;&lt;strong&gt;System mode&lt;/strong&gt; automatically follows your operating system&amp;rsquo;s dark/light preference and updates in real time if you change the OS setting.&lt;/p&gt;</description></item><item><title>Statistics</title><link>https://piotereks.top/free-parking/docs/manual/statistics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/free-parking/docs/manual/statistics/</guid><description>&lt;h1 id="statistics"&gt;Statistics&lt;a class="anchor" href="#statistics"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The Statistics screen shows a time-series chart of historical parking availability for both GreenDay and Uni Wroc.&lt;/p&gt;
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/statistics_annotated.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Statistics — light mode with labelled sections&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/statistics_dark.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Statistics — dark mode&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
 &lt;hr&gt;
 &lt;h2 id="chart-overview"&gt;Chart Overview&lt;a class="anchor" href="#chart-overview"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;The chart plots &lt;strong&gt;free parking spaces&lt;/strong&gt; over time. Two lines are drawn:&lt;/p&gt;
@@ -94,7 +124,11 @@
  &lt;/tr&gt;
  &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;!-- raw HTML omitted --&gt;
+&lt;figure&gt;&lt;img src="https://piotereks.top/free-parking/screenshots/chart_zoom.png"&gt;&lt;figcaption&gt;
+ &lt;h4&gt;Chart — zoomed view showing free-space trend lines and event markers&lt;/h4&gt;
+ &lt;/figcaption&gt;
+&lt;/figure&gt;
+
 &lt;hr&gt;
 &lt;h2 id="interacting-with-the-chart"&gt;Interacting with the Chart&lt;a class="anchor" href="#interacting-with-the-chart"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;h3 id="zooming"&gt;Zooming&lt;a class="anchor" href="#zooming"&gt;#&lt;/a&gt;&lt;/h3&gt;
