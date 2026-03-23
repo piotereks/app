@@ -9,20 +9,25 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <title>Parking Monitor</title>
     <link rel="icon" type="image/png" href="./assets/parking_favicon.png" />
-    <script type="module" crossorigin src="/free-parking/assets/index-BeKZXZGN.js"></script>
-    <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-echarts-nZu8rBDa.js">
-    <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-react-BVyvVbwp.js">
-    <link rel="modulepreload" crossorigin href="/free-parking/assets/vendor-utils-F0zOxUcV.js">
-    <link rel="stylesheet" crossorigin href="/free-parking/assets/index-PySeXE0t.css">
+    <script type="module" crossorigin src="/free-parking/assets/index-PT5ExFZh.js"></script>
   </head>
 
   <body>
     <div id="root"></div>
+
+
     <script>
       (function () {
         function isAndroid() {
           const ua = navigator.userAgent || navigator.vendor || window.opera;
-          return /Android/i.test(ua);
+          const detected = /Android/i.test(ua);
+          // When running in dev mode (`?dev`), behave like non-Android to
+          // allow debugging mobile flows without redirect/modal differences.
+          try {
+            return detected && !hasDevMode();
+          } catch (e) {
+            return detected;
+          }
         }
 
         function getParam(name) {
@@ -30,8 +35,12 @@
         }
 
         function hasDevMode() {
-          const v = getParam('dev');
-          return v !== null && v !== 'false' && v !== '0';
+          const params = new URLSearchParams(window.location.search);
+          // Accept presence of `?dev` (no value) or `?dev=...` unless explicitly
+          // set to false/0. This makes `?dev` behave as a truthy flag.
+          if (!params.has('dev')) return false;
+          const v = params.get('dev');
+          return v === null || v === '' || (v !== 'false' && v !== '0');
         }
 
         function hasShowInfo() {
@@ -42,18 +51,49 @@
         function runRedirectChecks() {
           if (hasDevMode()) {
             document.title = 'Parking Monitor DEV';
-          } else if (isAndroid()) {
-            window.location.href =
-              'https://play.google.com/store/apps/details?id=app.piotereks.freeparking';
           }
+          // Intentionally do not auto-redirect Android users here. Redirection
+          // to Play Store should only happen in response to the user's
+          // explicit action (the Continue button) to avoid loops.
         }
+
+        // If the page is shown again (e.g., user returns from Play Store via back),
+        // ensure Android users see the modal again. Use sessionStorage as a
+        // short-lived flag to detect returns from the redirect.
+        window.addEventListener('pageshow', (ev) => {
+          try {
+            // Only act for Android browsers and when we are not already forcing showInfo
+            if (isAndroid() && !hasShowInfo() && sessionStorage.getItem('fp_returning_from_play')) {
+              sessionStorage.removeItem('fp_returning_from_play');
+              const url = new URL(window.location.href);
+              url.searchParams.set('showInfo', '1');
+              // Use replace to avoid polluting history; this triggers a full reload
+              window.location.replace(url.toString());
+            }
+          } catch (e) {
+            // ignore
+          }
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
           const KEY = 'parking_info_seen';
-          const forceShow = hasShowInfo();
+
+          // Support `?clear=1` URL param to clear the stored seen flag.
+          // Useful for testing or forcing the modal to reappear for a user.
+          try {
+            if (getParam('clear') !== null) {
+              localStorage.removeItem(KEY);
+            }
+          } catch (e) {
+            // ignore storage errors
+          }
+          // Always force-show the info modal for Android browsers
+          const forceShow = hasShowInfo() || isAndroid();
 
           if (!forceShow && localStorage.getItem(KEY)) {
             runRedirectChecks();
+            // If not on Android (redirected), import the app immediately
+            if (!isAndroid() && window.__importApp) window.__importApp();
             return;
           }
 
@@ -94,15 +134,53 @@
           document.body.appendChild(modal);
           document.body.style.overflow = 'hidden';
 
+          // Track intentional close vs. unexpected removal
+          let intentionalClose = false;
+          let isRedirecting = false;
+
           document.getElementById('fp-continue').addEventListener('click', () => {
-            try { localStorage.setItem(KEY, '1'); } catch (e) {}
+            try {
+              // Do not persist the seen flag for Android users so modal shows every time
+              if (!isAndroid()) localStorage.setItem(KEY, '1');
+            } catch (e) {}
+
+            // Android users: redirect to Play Store but keep the modal in the DOM
+            // so returning users still see it. Do not mark as intentionalClose
+            // or remove the modal here.
+            if (isAndroid()) {
+              try { sessionStorage.setItem('fp_returning_from_play', '1'); } catch (e) {}
+              isRedirecting = true;
+              window.location.href = 'https://play.google.com/store/apps/details?id=app.piotereks.freeparking';
+              return;
+            }
+
+            // Non-Android flow: close modal and import the app
+            intentionalClose = true;
             if (modal.parentNode) modal.parentNode.removeChild(modal);
             document.body.style.overflow = '';
+
             runRedirectChecks();
+            if (window.__importApp) window.__importApp();
           });
+
+          // If the modal is removed unexpectedly on Android (skipped/closed), reload
+          // with showInfo=1 so modal appears again and user cannot access the page.
+          if (isAndroid()) {
+            const observer = new MutationObserver(() => {
+              if (!modal.parentNode && !intentionalClose && !isRedirecting) {
+                // force reload with showInfo to re-open modal
+                const url = new URL(window.location.href);
+                url.searchParams.set('showInfo', '1');
+                // reload (replace to avoid polluting history)
+                window.location.replace(url.toString());
+              }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+          }
         });
       })();
     </script>
 
+    
   </body>
 </html>
