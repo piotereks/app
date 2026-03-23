@@ -20,7 +20,14 @@
       (function () {
         function isAndroid() {
           const ua = navigator.userAgent || navigator.vendor || window.opera;
-          return /Android/i.test(ua);
+          const detected = /Android/i.test(ua);
+          // When running in dev mode (`?dev`), behave like non-Android to
+          // allow debugging mobile flows without redirect/modal differences.
+          try {
+            return detected && !hasDevMode();
+          } catch (e) {
+            return detected;
+          }
         }
 
         function getParam(name) {
@@ -66,6 +73,16 @@
 
         document.addEventListener('DOMContentLoaded', () => {
           const KEY = 'parking_info_seen';
+
+          // Support `?clear=1` URL param to clear the stored seen flag.
+          // Useful for testing or forcing the modal to reappear for a user.
+          try {
+            if (getParam('clear') !== null) {
+              localStorage.removeItem(KEY);
+            }
+          } catch (e) {
+            // ignore storage errors
+          }
           // Always force-show the info modal for Android browsers
           const forceShow = hasShowInfo() || isAndroid();
 
