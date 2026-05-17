@@ -105,7 +105,8 @@
     button.id = OVERLAY_ID;
     button.type = "button";
     button.textContent = "dict";
-    button.setAttribute("aria-label", "Open dictionary for selected word");
+    button.setAttribute("aria-label", "Open dictionary");
+    button.setAttribute("title", "es-dict");
     button.addEventListener("click", function (event) {
       event.preventDefault();
       if (activeWord) {
@@ -134,6 +135,23 @@
 
     var match = normalized.match(WORD_EXTRACT_PATTERN);
     return match ? match[0] : "";
+  }
+
+  function getSelectionQuery(text) {
+    if (!text) {
+      return "";
+    }
+
+    var normalized = String(text).trim();
+    if (!normalized) {
+      return "";
+    }
+
+    if (normalized.length > 80) {
+      return extractWord(normalized);
+    }
+
+    return normalized;
   }
 
   function getSelectionRect(selection) {
@@ -191,6 +209,8 @@
     button.style.left = Math.round(left) + "px";
     button.style.top = Math.round(clamp(top, 8, Math.max(8, window.innerHeight - buttonHeight - 8))) + "px";
     button.style.display = "inline-block";
+    button.setAttribute("title", "es-dict=" + word);
+    button.setAttribute("aria-label", "Open dictionary for " + word);
     activeWord = word;
   }
 
@@ -265,7 +285,7 @@
 
     window.setTimeout(function () {
       var selection = window.getSelection();
-      var word = extractWord(selection ? selection.toString() : "");
+      var word = getSelectionQuery(selection ? selection.toString() : "");
       if (!word) {
         hideOverlay();
         return;
@@ -320,7 +340,7 @@
     event.preventDefault();
 
     var selection = window.getSelection();
-    var selectedWord = extractWord(selection ? selection.toString() : "");
+    var selectedWord = getSelectionQuery(selection ? selection.toString() : "");
     if (selectedWord) {
       openDictionary(selectedWord);
       hideOverlay();
