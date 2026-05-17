@@ -104,7 +104,7 @@
     var button = document.createElement("button");
     button.id = OVERLAY_ID;
     button.type = "button";
-    button.textContent = "dict";
+    button.textContent = "es-dict";
     button.setAttribute("aria-label", "Open dictionary");
     button.setAttribute("title", "es-dict");
     button.addEventListener("click", function (event) {
