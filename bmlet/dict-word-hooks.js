@@ -8,11 +8,7 @@
   var WORD_CHAR_PATTERN = createWordCharPattern();
   var STYLE_ELEMENT_ID = "dict-word-hook-styles";
   var OVERLAY_ID = "dict-word-hook-overlay";
-  var INIT_FLAG = "__dictWordHookActive";
   var activeWord = "";
-  var isTouching = false;
-  var lastTouchEndTime = 0;
-  var scrollHideTimer = null;
 
   function createWordPattern() {
     try {
@@ -66,8 +62,6 @@
       "cursor:pointer;" +
       "box-shadow:0 2px 8px rgba(0,0,0,.25);" +
       "backdrop-filter:saturate(140%) blur(2px);" +
-      "min-width:44px;" +
-      "min-height:44px;" +
       "}" +
       "#" + OVERLAY_ID + ":hover,#" + OVERLAY_ID + ":focus{" +
       "background:rgba(0,0,0,.95);" +
@@ -85,27 +79,20 @@
     return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || element.isContentEditable;
   }
 
-  function shouldSkipNode(node) {
-    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+  function shouldSkipNode(parent) {
+    if (!parent || parent.nodeType !== Node.ELEMENT_NODE) {
       return true;
     }
 
-    if (node.closest) {
-      return !!node.closest("script,style,noscript,textarea,a,input,select,[contenteditable]");
-    }
-
-    var el = node;
-    while (el && el.nodeType === Node.ELEMENT_NODE) {
-      var tag = el.tagName;
-      if (
-        tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" ||
-        tag === "TEXTAREA" || tag === "A" || isEditableElement(el)
-      ) {
-        return true;
-      }
-      el = el.parentElement;
-    }
-    return false;
+    var tag = parent.tagName;
+    return (
+      tag === "SCRIPT" ||
+      tag === "STYLE" ||
+      tag === "NOSCRIPT" ||
+      tag === "TEXTAREA" ||
+      tag === "A" ||
+      isEditableElement(parent)
+    );
   }
 
   function ensureOverlayButton() {
@@ -117,7 +104,7 @@
     var button = document.createElement("button");
     button.id = OVERLAY_ID;
     button.type = "button";
-    button.textContent = "es-dict";
+    button.textContent = "dict";
     button.setAttribute("aria-label", "Open dictionary");
     button.setAttribute("title", "es-dict");
     button.addEventListener("click", function (event) {
@@ -211,10 +198,8 @@
     }
 
     var button = ensureOverlayButton();
-    button.style.visibility = "hidden";
-    button.style.display = "inline-block";
-    var buttonWidth = button.offsetWidth || 64;
-    var buttonHeight = button.offsetHeight || 44;
+    var buttonWidth = 48;
+    var buttonHeight = 30;
     var left = clamp(rect.left, 8, Math.max(8, window.innerWidth - buttonWidth - 8));
     var top = rect.bottom + 8;
     if (top + buttonHeight > window.innerHeight - 8) {
@@ -223,7 +208,7 @@
 
     button.style.left = Math.round(left) + "px";
     button.style.top = Math.round(clamp(top, 8, Math.max(8, window.innerHeight - buttonHeight - 8))) + "px";
-    button.style.visibility = "";
+    button.style.display = "inline-block";
     button.setAttribute("title", "es-dict=" + word);
     button.setAttribute("aria-label", "Open dictionary for " + word);
     activeWord = word;
@@ -298,7 +283,6 @@
       return;
     }
 
-    var delay = event.type === "touchend" ? 50 : 0;
     window.setTimeout(function () {
       var selection = window.getSelection();
       var word = getSelectionQuery(selection ? selection.toString() : "");
@@ -314,7 +298,7 @@
       }
 
       showOverlay(word, rect);
-    }, delay);
+    }, 0);
   }
 
   function onClick(event) {
@@ -369,68 +353,15 @@
     }
   }
 
-  function onTouchStart() {
-    isTouching = true;
-  }
-
-  function onTouchEnd() {
-    isTouching = false;
-    lastTouchEndTime = Date.now();
-  }
-
-  function onScroll() {
-    // During active touch or within 600ms of touch end (momentum scroll),
-    // debounce the hide so the user can still tap the overlay button.
-    if (isTouching || (Date.now() - lastTouchEndTime < 600)) {
-      clearTimeout(scrollHideTimer);
-      scrollHideTimer = setTimeout(hideOverlay, 400);
-    } else {
-      hideOverlay();
-    }
-  }
-
-  function teardown() {
-    document.removeEventListener("mouseup", handleSelectionOverlay, false);
-    document.removeEventListener("touchend", handleSelectionOverlay, false);
-    document.removeEventListener("click", onClick, true);
-    document.removeEventListener("keydown", onKeyDown, false);
-    window.removeEventListener("scroll", onScroll, true);
-    window.removeEventListener("resize", hideOverlay, false);
-    window.removeEventListener("touchstart", onTouchStart, false);
-    window.removeEventListener("touchend", onTouchEnd, false);
-
-    clearTimeout(scrollHideTimer);
-    hideOverlay();
-    var button = document.getElementById(OVERLAY_ID);
-    if (button) {
-      button.parentNode.removeChild(button);
-    }
-    var style = document.getElementById(STYLE_ELEMENT_ID);
-    if (style) {
-      style.parentNode.removeChild(style);
-    }
-
-    window[INIT_FLAG] = false;
-  }
-
   function init() {
-    if (window[INIT_FLAG]) {
-      teardown();
-      return;
-    }
-    window[INIT_FLAG] = true;
-
     ensureStyles();
     ensureOverlayButton();
 
     document.addEventListener("mouseup", handleSelectionOverlay, false);
-    document.addEventListener("touchend", handleSelectionOverlay, false);
     document.addEventListener("click", onClick, true);
     document.addEventListener("keydown", onKeyDown, false);
-    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("scroll", hideOverlay, true);
     window.addEventListener("resize", hideOverlay, false);
-    window.addEventListener("touchstart", onTouchStart, false);
-    window.addEventListener("touchend", onTouchEnd, false);
   }
 
   if (document.readyState === "loading") {

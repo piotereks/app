@@ -16,7 +16,7 @@
 &lt;p&gt;Use the button below to drag a new bookmark into your bookmarks bar, or copy the bookmark URL manually.&lt;/p&gt;
 &lt;h3 id="esp-dict-bookmarklet"&gt;ESP Dict bookmarklet&lt;/h3&gt;
 &lt;p&gt;Drag this button to your bookmarks bar to install the dictionary hook loader:&lt;/p&gt;
-&lt;p&gt;&lt;a href="javascript:(function(){var s=document.createElement('script');s.src='https://piotereks.top/bmlet/bookmarklet-install.js?SCRIPT_URL=https%3A%2F%2Fpiotereks.top%2Fbmlet%2Fdict-word-hooks.js&amp;LOADING_FLAG=__dictWordHooksBookmarkletLoading';var parent=document.body||document.head||document.documentElement;parent.appendChild(s);})();"&gt;&lt;img src="https://piotereks.top/favicon.png" alt="es-dict" width="16" height="16" style="vertical-align:middle;margin-right:0.4em"&gt;es-dict&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="javascript:(function(){var s=document.createElement('script');s.src='https://piotereks.top/bmlet/bookmarklet-install.js?SCRIPT_URL=%2Fbmlet%2Fdict-word-hooks.js&amp;LOADING_FLAG=__dictWordHooksBookmarkletLoading';var parent=document.body||document.head||document.documentElement;parent.appendChild(s);})();"&gt;&lt;img src="https://piotereks.top/favicon.png" alt="es-dict" width="16" height="16" style="vertical-align:middle;margin-right:0.4em"&gt;es-dict&lt;/a&gt;&lt;/p&gt;
 &lt;h3 id="how-to-use"&gt;How to use&lt;/h3&gt;
 &lt;ol&gt;
 &lt;li&gt;Make sure your browser shows the bookmarks bar.&lt;/li&gt;
