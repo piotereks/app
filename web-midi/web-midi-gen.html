@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDI Synthesizer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'JetBrains Mono','Fira Code','Courier New',monospace;
+  font-size:11px;line-height:1.4;
+  background:#f5f4f0;color:#1a1917;
+  padding:1rem;
+}
+/* CSS VARIABLES — swap for dark theme */
+:root{
+  --bg:        #f5f4f0;
+  --bg2:       #eeede9;
+  --bg3:       #e5e4df;
+  --border:    #d4d2cb;
+  --border2:   #c4c2bb;
+  --text:      #1a1917;
+  --text2:     #5a5955;
+  --text3:     #888780;
+  --blue:      #378ADD;
+  --blue-bg:   #E6F1FB;
+  --blue-dk:   #0C447C;
+  --blue-md:   #185FA5;
+  --green:     #1D9E75;
+  --amber:     #BA7517;
+  --amber-bg:  #FAEEDA;
+  --amber-dk:  #633806;
+  --red:       #E24B4A;
+  --red-bg:    #FCEBEB;
+  --red-dk:    #A32D2D;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+}
+.app{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+h1{font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.05em;margin-bottom:2px}
+/* STATUS */
+.sb{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:var(--radius-md);border:.5px solid var(--border);background:var(--bg2)}
+.led{width:8px;height:8px;border-radius:50%;background:#888780;flex-shrink:0}
+.led.ok {background:var(--green);box-shadow:0 0 0 2px #1D9E7530}
+.led.err{background:var(--red);  box-shadow:0 0 0 2px #E24B4A30}
+.led.warn{background:var(--amber);box-shadow:0 0 0 2px #BA751730}
+.sb-info{flex:1;min-width:0}
+.sb-main{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-dev {font-size:9px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-r{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.lbl{font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
+select.sc{font-size:10px;font-family:inherit;padding:3px 5px;border-radius:var(--radius-sm);border:.5px solid var(--border2);background:var(--bg);color:var(--text)}
+/* CARD */
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:10px 12px}
+.ct{font-size:9px;letter-spacing:.10em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+/* PATCH GRID */
+.pg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.pb{padding:7px 4px;border-radius:var(--radius-sm);border:.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;transition:all .1s;position:relative}
+.pb-i{position:absolute;top:3px;left:5px;font-size:7px;color:var(--text3)}
+.pb-n{font-size:10px;font-weight:700;color:var(--text);display:block;font-family:inherit}
+.pb-c{font-size:8px;color:var(--text3);display:block;margin-top:2px;letter-spacing:.03em}
+.pb:hover{border-color:var(--border2);transform:translateY(-1px)}
+.pb.sel{background:var(--blue-bg);border-color:var(--blue)}
+.pb.sel .pb-n{color:var(--blue-dk)}.pb.sel .pb-c,.pb.sel .pb-i{color:var(--blue-md)}
+/* 2-COL */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* MEMORY */
+.mg{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:7px}
+.mb{padding:4px 2px;border-radius:var(--radius-sm);border:.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;min-height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .1s}
+.mb-n{font-size:10px;font-weight:700;color:var(--text3);font-family:inherit}
+.mb-s{font-size:7px;color:var(--text3);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.mb.has{border-color:var(--border2)}.mb.has .mb-n,.mb.has .mb-s{color:var(--text2)}
+.mb.cur{background:var(--blue-bg);border-color:var(--blue)}.mb.cur .mb-n{color:var(--blue-dk)}.mb.cur .mb-s{color:var(--blue-md)}
+.mact{display:flex;gap:5px}
+.mact button{flex:1;padding:5px 3px;border-radius:var(--radius-sm);border:.5px solid var(--border2);background:transparent;font-size:10px;font-family:inherit;cursor:pointer;color:var(--text);letter-spacing:.03em}
+.mact button:hover{background:var(--bg2)}
+.mact .svb{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-dk)}
+/* CONTROLS */
+.crow{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.crow:last-child{margin-bottom:0}
+.clbl{font-size:9px;color:var(--text3);min-width:52px;flex-shrink:0;letter-spacing:.06em;text-transform:uppercase}
+.nc{display:flex;align-items:center;gap:4px}
+.nb{width:20px;height:20px;border-radius:50%;border:.5px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text);line-height:1;font-family:inherit}
+.nb:hover{background:var(--bg2)}
+.nv{font-size:13px;font-weight:700;min-width:26px;text-align:center;font-family:inherit}
+.nv.hi{color:var(--amber)}
+input[type=range]{flex:1;cursor:pointer}
+.vv{font-size:10px;color:var(--text3);min-width:28px;text-align:right;font-family:inherit}
+.mutbtn{padding:4px 9px;border-radius:var(--radius-sm);border:.5px solid var(--border2);background:transparent;font-size:10px;font-family:inherit;cursor:pointer;color:var(--text)}
+.mutbtn.on{background:var(--red-bg);border-color:var(--red);color:var(--red-dk)}
+/* MONITOR */
+.mon{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mi{display:flex;flex-direction:column;gap:3px}
+.mi-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.mi-bar{height:5px;background:var(--bg2);border-radius:3px;position:relative;overflow:hidden;border:.5px solid var(--border)}
+.mi-fill{height:100%;border-radius:3px;transition:width .07s,left .07s;position:absolute;top:0}
+.mi-fill.b{background:var(--blue)}.mi-fill.g{background:var(--green)}.mi-fill.a{background:var(--amber)}
+.mi-mark{position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--border2);z-index:1}
+.mi-v{font-size:9px;color:var(--text3);font-family:inherit}
+.mi.sus-row{flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap}
+.sus-dot{width:10px;height:10px;border-radius:50%;background:var(--bg2);border:.5px solid var(--border2);flex-shrink:0;transition:all .12s}
+.sus-dot.on{background:var(--green);border-color:var(--green);box-shadow:0 0 6px #1D9E7540}
+/* PIANO */
+.pw{overflow-x:auto;padding-bottom:2px}
+.pno{position:relative;height:76px;display:flex;user-select:none}
+.wk{position:relative;width:26px;height:74px;border:.5px solid var(--border2);background:var(--bg);border-radius:0 0 3px 3px;cursor:pointer;flex-shrink:0;transition:background .04s}
+.wk:hover{background:var(--bg2)}
+.wk.pr{background:#B5D4F4;border-color:var(--blue)}
+.wk .kl{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:7px;color:var(--text3);pointer-events:none;font-family:inherit;font-weight:700}
+.bk{position:absolute;width:17px;height:46px;background:#2C2C2A;border-radius:0 0 3px 3px;z-index:2;cursor:pointer;transition:background .04s}
+.bk:hover{background:#3D3D3B}
+.bk.pr{background:var(--blue-md)}
+/* NOTES */
+.ntd{display:flex;flex-wrap:wrap;gap:5px;min-height:26px;align-items:center}
+.nt{display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:var(--radius-sm);border:.5px solid var(--border);background:var(--bg2)}
+.nt.sus{border-color:var(--amber);background:var(--amber-bg)}
+.nt-n{font-size:11px;font-weight:700;font-family:inherit}
+.nt.sus .nt-n{color:var(--amber-dk)}
+.nt-v{width:24px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.nt-vb{height:100%;background:var(--blue);border-radius:2px}
+.nt.sus .nt-vb{background:var(--amber)}
+.nt-ph{font-size:11px;color:var(--text3);font-family:inherit}
+/* TOAST */
+.toast{position:fixed;bottom:16px;right:16px;padding:5px 10px;border-radius:var(--radius-md);background:var(--bg2);border:.5px solid var(--border2);font-size:10px;color:var(--text2);font-family:inherit;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<h1>MIDI SYNTHESIZER</h1>
+
+<div class="sb">
+  <div class="led" id="mled"></div>
+  <div class="sb-info">
+    <div class="sb-main" id="smain">Requesting Web MIDI access…</div>
+    <div class="sb-dev"  id="sdev"></div>
+  </div>
+  <div class="sb-r">
+    <span class="lbl">Ch</span><select class="sc" id="chsel"></select>
+    <span class="lbl">PC</span><select class="sc" id="pcsel"></select>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ct">Sound bank — 12 patches</div>
+  <div class="pg" id="patchGrid"></div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="ct">Memory — 8 slots</div>
+    <div class="mg" id="memGrid"></div>
+    <div class="mact">
+      <button class="svb" id="btnSave">Save</button>
+      <button id="btnLoad">Load</button>
+      <button id="btnClear">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Performance controls</div>
+    <div class="crow">
+      <span class="clbl">Octave</span>
+      <div class="nc">
+        <button class="nb" id="octDn">−</button>
+        <span class="nv" id="octVal">0</span>
+        <button class="nb" id="octUp">+</button>
+      </div>
+      <span style="font-size:9px;color:var(--text3);margin-left:2px">[Z / X]</span>
+    </div>
+    <div class="crow">
+      <span class="clbl">Transpose</span>
+      <div class="nc">
+        <button class="nb" id="trDn">−</button>
+        <span class="nv" id="trVal">0</span>
+        <button class="nb" id="trUp">+</button>
+      </div>
+      <span style="font-size:9px;color:var(--text3);margin-left:2px">semitones</span>
+    </div>
+    <div class="crow">
+      <span class="clbl">Volume</span>
+      <input type="range" id="volSlider" min="0" max="100" value="80" step="1">
+      <span class="vv" id="volVal">80%</span>
+      <button class="mutbtn" id="mutBtn">Mute</button>
+    </div>
+    <div class="crow">
+      <span class="clbl">Bend ±</span>
+      <div class="nc">
+        <button class="nb" id="bdDn">−</button>
+        <span class="nv" id="bdVal">2</span>
+        <button class="nb" id="bdUp">+</button>
+      </div>
+      <span style="font-size:9px;color:var(--text3);margin-left:2px">st</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ct">MIDI monitor</div>
+  <div class="mon">
+    <div class="mi">
+      <div class="mi-l">Pitch bend</div>
+      <div class="mi-bar">
+        <div class="mi-mark"></div>
+        <div class="mi-fill b" id="m-pb" style="left:50%;width:0"></div>
+      </div>
+      <div class="mi-v" id="m-pb-v">0.0 st</div>
+    </div>
+    <div class="mi">
+      <div class="mi-l">Mod wheel · CC1</div>
+      <div class="mi-bar"><div class="mi-fill g" id="m-mod" style="width:0"></div></div>
+      <div class="mi-v" id="m-mod-v">0</div>
+    </div>
+    <div class="mi sus-row">
+      <div class="sus-dot" id="susdot"></div>
+      <div>
+        <div class="mi-l">Sustain · CC64</div>
+        <div class="mi-v" id="susval">Off</div>
+      </div>
+    </div>
+    <div class="mi">
+      <div class="mi-l">Brightness · CC74</div>
+      <div class="mi-bar"><div class="mi-fill b" id="m-fil" style="width:100%"></div></div>
+      <div class="mi-v" id="m-fil-v">127</div>
+    </div>
+    <div class="mi">
+      <div class="mi-l">Reverb · CC91</div>
+      <div class="mi-bar"><div class="mi-fill a" id="m-rev" style="width:31%"></div></div>
+      <div class="mi-v" id="m-rev-v">40</div>
+    </div>
+    <div class="mi">
+      <div class="mi-l">Expression · CC11</div>
+      <div class="mi-bar"><div class="mi-fill g" id="m-exp" style="width:100%"></div></div>
+      <div class="mi-v" id="m-exp-v">127</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ct">On-screen keyboard — MIDI in · mouse · touch · computer keys</div>
+  <div class="pw"><div class="pno" id="pno"></div></div>
+  <div style="margin-top:6px;font-size:9px;color:var(--text3)">
+    A S D F G H J K L ; → white keys (C4→) &nbsp;·&nbsp; W E T Y U O P → sharps &nbsp;·&nbsp; Z / X → octave ↓↑
+  </div>
+</div>
+
+<div class="card">
+  <div class="ct">Active notes</div>
+  <div class="ntd" id="notesDisp"><span class="nt-ph">—</span></div>
+</div>
+
+</div><!-- .app -->
+<div class="toast" id="toast">Switching patch…</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+<script>
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const isSharp = n => NOTE_NAMES[n%12].includes('#');
+const toName  = n => NOTE_NAMES[n%12]+(Math.floor(n/12)-1);
+const clamp   = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+const toDb    = v => v===0 ? -Infinity : 20*Math.log10(v/100);
+const sleep   = ms => new Promise(r=>setTimeout(r,ms));
+
+// ── PATCHES ───────────────────────────────────────────────────────────────────
+// vel  = velocity curve exponent (>1 more dynamic, <1 compressed)
+// bend = default pitch-bend range in semitones
+// poly = max polyphony voices
+const PATCHES=[
+  {name:'Grand Piano', cat:'Keys',     type:'synth',
+   opts:{oscillator:{type:'triangle8'},envelope:{attack:0.002,decay:0.9,sustain:0.05,release:2.0}},
+   fHz:5000,fQ:0.5,rev:0.20,cho:0.05,vel:1.5,bend:2,poly:16},
+
+  {name:'Elec Piano',  cat:'Keys',     type:'fm',
+   opts:{harmonicity:3.5,modulationIndex:10,oscillator:{type:'sine'},
+         envelope:{attack:0.001,decay:0.5,sustain:0.10,release:0.8},
+         modulation:{type:'sine'},
+         modulationEnvelope:{attack:0.002,decay:0.3,sustain:0,release:0.5}},
+   fHz:4000,fQ:1.0,rev:0.20,cho:0.30,vel:1.2,bend:2,poly:12},
+
+  {name:'Strings',     cat:'Ensemble', type:'synth',
+   opts:{oscillator:{type:'fatsawtooth',count:4,spread:40},
+         envelope:{attack:0.40,decay:0.1,sustain:0.90,release:1.5}},
+   fHz:2500,fQ:0.8,rev:0.50,cho:0.60,vel:1.0,bend:2,poly:12},
+
+  {name:'Warm Pad',    cat:'Pad',      type:'synth',
+   opts:{oscillator:{type:'sine'},envelope:{attack:1.20,decay:0.1,sustain:1.00,release:3.0}},
+   fHz:1200,fQ:1.5,rev:0.70,cho:0.40,vel:0.8,bend:4,poly:10},
+
+  {name:'Brass',       cat:'Ensemble', type:'synth',
+   opts:{oscillator:{type:'sawtooth'},envelope:{attack:0.05,decay:0.08,sustain:0.80,release:0.3}},
+   fHz:1800,fQ:3.0,rev:0.20,cho:0.20,vel:1.3,bend:2,poly:10},
+
+  {name:'Organ',       cat:'Keys',     type:'synth',
+   opts:{oscillator:{type:'square8'},envelope:{attack:0.001,decay:0.001,sustain:1.00,release:0.02}},
+   fHz:8000,fQ:0.3,rev:0.15,cho:0.30,vel:0.65,bend:2,poly:16},
+
+  {name:'Synth Bass',  cat:'Bass',     type:'synth',
+   opts:{oscillator:{type:'sawtooth'},envelope:{attack:0.005,decay:0.20,sustain:0.30,release:0.3}},
+   fHz:600,fQ:6.0,rev:0.05,cho:0.00,vel:1.4,bend:2,poly:6},
+
+  {name:'Synth Lead',  cat:'Lead',     type:'synth',
+   opts:{oscillator:{type:'square'},envelope:{attack:0.010,decay:0.05,sustain:0.80,release:0.2}},
+   fHz:5000,fQ:2.0,rev:0.15,cho:0.00,vel:1.2,bend:12,poly:8},
+
+  {name:'Bell',        cat:'Mallet',   type:'fm',
+   opts:{harmonicity:5.1,modulationIndex:32,oscillator:{type:'sine'},
+         envelope:{attack:0.001,decay:1.80,sustain:0,release:1.5},
+         modulation:{type:'sine'},
+         modulationEnvelope:{attack:0.001,decay:0.6,sustain:0.1,release:1.2}},
+   fHz:10000,fQ:0.3,rev:0.60,cho:0.00,vel:1.8,bend:2,poly:10},
+
+  {name:'Pluck',       cat:'Mallet',   type:'synth',
+   opts:{oscillator:{type:'triangle'},envelope:{attack:0.001,decay:0.25,sustain:0,release:0.3}},
+   fHz:6000,fQ:1.0,rev:0.30,cho:0.10,vel:1.5,bend:2,poly:12},
+
+  {name:'Choir',       cat:'Pad',      type:'synth',
+   opts:{oscillator:{type:'fatsawtooth',count:3,spread:25},
+         envelope:{attack:0.80,decay:0.1,sustain:0.80,release:2.5}},
+   fHz:1500,fQ:2.0,rev:0.65,cho:0.50,vel:1.0,bend:2,poly:10},
+
+  {name:'Fat Synth',   cat:'Lead',     type:'synth',
+   opts:{oscillator:{type:'fatsawtooth',count:5,spread:60},
+         envelope:{attack:0.020,decay:0.1,sustain:0.70,release:0.5}},
+   fHz:3000,fQ:5.0,rev:0.30,cho:0.40,vel:1.1,bend:2,poly:10},
+];
+
+// ── COMPUTER KEYBOARD MAP (raw MIDI, C4=60) ───────────────────────────────────
+const KEY_MAP={
+  'a':60,'w':61,'s':62,'e':63,'d':64,'f':65,'t':66,'g':67,
+  'y':68,'h':69,'u':70,'j':71,'k':72,'o':73,'l':74,'p':75,';':76
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const S={
+  patchIdx:0, octave:0, transpose:0, volume:80, muted:false,
+  bendRange:2, midiCh:0,
+  sustainOn:false,
+  sustainedNotes:new Set(),   // raw midi notes queued for release by sustain
+  activeNotes:new Map(),      // rawMidi → { sFreq, vel }
+  pitchBendCents:0, modVal:0,
+  ccFilter:127, ccReverb:40, ccChorus:40, ccExpr:127,
+  memSlots:new Array(8).fill(null), curMemSlot:0,
+  audioReady:false, synthBusy:false,
+};
+
+// ── AUDIO GRAPH ───────────────────────────────────────────────────────────────
+// synth → filter → vibrato → chorus → reverb → exprGain → masterVol → out
+let synth=null, filter, vibrato, chorus, reverb, exprGain, masterVol;
+
+async function initAudio(){
+  if(S.audioReady) return;
+  await Tone.start();
+  const p=PATCHES[S.patchIdx];
+  masterVol = new Tone.Volume(toDb(S.volume)).toDestination();
+  exprGain  = new Tone.Gain(1).connect(masterVol);
+  reverb    = new Tone.Reverb({decay:2.5, wet:p.rev});
+  await reverb.ready;
+  reverb.connect(exprGain);
+  chorus    = new Tone.Chorus(4,2.5,0.5);
+  chorus.wet.value=p.cho;
+  chorus.connect(reverb);
+  chorus.start();
+  vibrato   = new Tone.Vibrato({frequency:5.5, depth:0});
+  vibrato.connect(chorus);
+  filter    = new Tone.Filter({frequency:p.fHz, type:'lowpass', Q:p.fQ});
+  filter.connect(vibrato);
+  S.audioReady=true;
+  await createSynth(S.patchIdx);
+}
+
+async function createSynth(idx){
+  if(S.synthBusy) return;
+  S.synthBusy=true;
+  showToast('Switching patch…');
+  const p=PATCHES[idx];
+  if(synth){
+    try{ synth.releaseAll(); }catch(e){}
+    await sleep(30);
+    try{ synth.disconnect(); synth.dispose(); }catch(e){}
+    synth=null;
+  }
+  S.sustainedNotes.clear();
+  S.activeNotes.clear();
+  synth = p.type==='fm'
+    ? new Tone.PolySynth(Tone.FMSynth, p.opts)
+    : new Tone.PolySynth(Tone.Synth,   p.opts);
+  synth.maxPolyphony=p.poly;
+  synth.connect(filter);
+  // Apply current CC state to effects chain
+  const fcc=S.ccFilter/127;
+  filter.frequency.value = clamp(100+(p.fHz-100)*fcc, 100, 20000);
+  filter.Q.value = p.fQ;
+  reverb.wet.value = clamp(p.rev*(S.ccReverb/127)*2, 0, 0.95);
+  chorus.wet.value = clamp(p.cho*(S.ccChorus/127)*2, 0, 1);
+  synth.set({detune: S.pitchBendCents});
+  S.patchIdx=idx;
+  S.bendRange=p.bend;
+  S.synthBusy=false;
+  hideToast();
+  renderPatchGrid();
+  renderNotes();
+  document.getElementById('bdVal').textContent=S.bendRange;
+  const pc=document.getElementById('pcsel');
+  if(pc) pc.value=idx;
+}
+
+// ── PLAYBACK ──────────────────────────────────────────────────────────────────
+function velCurve(rawVel, curve){
+  // curve>1 → more dynamic (needs hard playing for loud)
+  // curve<1 → compressed (even soft touch is reasonably loud)
+  return clamp(Math.pow(rawVel/127, curve), 0, 1);
+}
+
+function shiftedFreq(rawMidi){
+  const m=clamp(rawMidi + S.octave*12 + S.transpose, 0, 127);
+  return Tone.Frequency(m,'midi').toFrequency();
+}
+
+function noteOn(rawMidi, rawVel){
+  if(!S.audioReady){ initAudio().then(()=>noteOn(rawMidi,rawVel)); return; }
+  if(!synth||S.synthBusy) return;
+  S.sustainedNotes.delete(rawMidi);
+  if(S.activeNotes.has(rawMidi)){
+    const ex=S.activeNotes.get(rawMidi);
+    try{ synth.triggerRelease(ex.sFreq, Tone.now()); }catch(e){}
+    S.activeNotes.delete(rawMidi);
+  }
+  const p=PATCHES[S.patchIdx];
+  const sFreq=shiftedFreq(rawMidi);
+  const vel=velCurve(rawVel, p.vel);
+  // Velocity → transient filter brightness
+  const baseHz=clamp(100+(p.fHz-100)*(S.ccFilter/127), 100, 20000);
+  filter.frequency.rampTo(baseHz*(1+vel*0.6), 0.01);
+  filter.frequency.rampTo(baseHz, 0.35);
+  try{ synth.triggerAttack(sFreq, Tone.now(), vel); }catch(e){}
+  S.activeNotes.set(rawMidi, {sFreq, vel:rawVel});
+  renderPianoKey(rawMidi, true);
+  renderNotes();
+}
+
+function noteOff(rawMidi){
+  if(S.sustainOn){
+    if(S.activeNotes.has(rawMidi)) S.sustainedNotes.add(rawMidi);
+    renderNotes();
+    return;
+  }
+  releaseNote(rawMidi);
+}
+
+function releaseNote(rawMidi){
+  const note=S.activeNotes.get(rawMidi);
+  if(!note||!synth) return;
+  try{ synth.triggerRelease(note.sFreq, Tone.now()); }catch(e){}
+  S.activeNotes.delete(rawMidi);
+  S.sustainedNotes.delete(rawMidi);
+  renderPianoKey(rawMidi, false);
+  renderNotes();
+}
+
+function setSustain(on){
+  S.sustainOn=on;
+  const dot=document.getElementById('susdot');
+  const val=document.getElementById('susval');
+  if(dot) dot.className='sus-dot'+(on?' on':'');
+  if(val) val.textContent=on?'On':'Off';
+  if(!on){
+    const held=[...S.sustainedNotes];
+    S.sustainedNotes.clear();
+    held.forEach(m=>releaseNote(m));
+  }
+}
+
+function releaseAll(){
+  if(synth){ try{ synth.releaseAll(); }catch(e){} }
+  S.activeNotes.clear(); S.sustainedNotes.clear();
+  setSustain(false); renderNotes();
+  document.querySelectorAll('.wk.pr,.bk.pr').forEach(k=>k.classList.remove('pr'));
+}
+
+// ── CC / MIDI HANDLING ────────────────────────────────────────────────────────
+function handleCC(num, val){
+  const p=PATCHES[S.patchIdx];
+  switch(num){
+    case 1:   // Modulation wheel → vibrato depth
+      S.modVal=val;
+      if(vibrato) vibrato.depth.rampTo((val/127)*0.55, 0.05);
+      setMon('m-mod','m-mod-v', val/127*100, val); break;
+    case 7:   // Channel volume
+      S.volume=Math.round(val/127*100);
+      if(!S.muted&&masterVol) masterVol.volume.rampTo(toDb(S.volume), 0.02);
+      document.getElementById('volSlider').value=S.volume;
+      document.getElementById('volVal').textContent=S.volume+'%'; break;
+    case 11:  // Expression (multiplicative gain)
+      S.ccExpr=val;
+      if(exprGain&&!S.muted) exprGain.gain.rampTo(val/127, 0.02);
+      setMon('m-exp','m-exp-v', val/127*100, val); break;
+    case 64:  // Sustain pedal
+      setSustain(val>=64); break;
+    case 71:  // Resonance / filter Q
+      if(filter) filter.Q.rampTo(clamp(val/127*20, 0.1, 20), 0.05); break;
+    case 74:  // Brightness / filter cutoff
+      S.ccFilter=val;
+      if(filter) filter.frequency.rampTo(clamp(100+(p.fHz-100)*(val/127), 100, 20000), 0.06);
+      setMon('m-fil','m-fil-v', val/127*100, val); break;
+    case 91:  // Reverb send
+      S.ccReverb=val;
+      if(reverb) reverb.wet.rampTo(clamp(p.rev*(val/127)*2, 0, 0.95), 0.10);
+      setMon('m-rev','m-rev-v', val/127*100, val); break;
+    case 93:  // Chorus send
+      S.ccChorus=val;
+      if(chorus) chorus.wet.rampTo(clamp(p.cho*(val/127)*2, 0, 1), 0.10); break;
+    case 120: case 123: releaseAll(); break;
+  }
+}
+
+function handlePitchBend(lsb, msb){
+  const raw=(msb<<7)|lsb;
+  const norm=(raw-8192)/8192;              // −1 … +1
+  S.pitchBendCents=norm*S.bendRange*100;
+  if(synth) synth.set({detune: S.pitchBendCents});
+  // Update centered monitor bar
+  const pct=clamp(norm*50, -50, 50);
+  const fill=document.getElementById('m-pb');
+  if(fill){
+    if(norm>=0){ fill.style.left='50%'; fill.style.width=pct+'%'; }
+    else       { fill.style.left=(50+pct)+'%'; fill.style.width=(-pct)+'%'; }
+  }
+  const vEl=document.getElementById('m-pb-v');
+  if(vEl) vEl.textContent=(Math.round(norm*S.bendRange*10)/10).toFixed(1)+' st';
+}
+
+function handleMidiMessage(e){
+  const d=e.data;
+  if(!d||d.length<2) return;
+  const status=d[0], d1=d[1], d2=d.length>2?d[2]:0;
+  const cmd=status&0xf0;
+  const ch=(status&0x0f)+1;
+  if(S.midiCh!==0&&ch!==S.midiCh) return;
+  switch(cmd){
+    case 0x90: d2>0?noteOn(d1,d2):noteOff(d1); break;
+    case 0x80: noteOff(d1); break;
+    case 0xb0: handleCC(d1,d2); break;
+    case 0xe0: handlePitchBend(d1,d2); break;
+    case 0xc0: // Program change
+      Tone.start().then(()=>initAudio().then(()=>createSynth(d1%PATCHES.length))); break;
+    case 0xd0: // Channel aftertouch → vibrato
+      if(vibrato) vibrato.depth.rampTo((d1/127)*0.30, 0.05); break;
+  }
+}
+
+// ── MIDI INIT ─────────────────────────────────────────────────────────────────
+function setStatus(cls, main, dev){
+  const led=document.getElementById('mled');
+  if(led) led.className='led '+cls;
+  const sm=document.getElementById('smain'); if(sm) sm.textContent=main;
+  const sd=document.getElementById('sdev');  if(sd) sd.textContent=dev||'';
+}
+
+function initMidi(){
+  if(!navigator.requestMIDIAccess){
+    setStatus('err','Web MIDI not available — use Chrome or Edge'); return;
+  }
+  navigator.requestMIDIAccess({sysex:false})
+    .then(access=>{
+      const refresh=()=>{
+        const inputs=[...access.inputs.values()];
+        inputs.forEach(i=>{ i.onmidimessage=handleMidiMessage; });
+        if(inputs.length>0){
+          setStatus('ok',
+            `MIDI ready · ${inputs.length} device${inputs.length>1?'s':''} connected`,
+            inputs.map(i=>i.name).join(' · '));
+        } else {
+          setStatus('warn','Web MIDI available — no devices connected',
+            'Plug in a MIDI keyboard; it will appear here automatically');
+        }
+      };
+      refresh();
+      access.onstatechange=refresh;
+    })
+    .catch(()=>setStatus('err','MIDI permission denied — check browser settings'));
+}
+
+// ── KEYBOARD INPUT ────────────────────────────────────────────────────────────
+const pressedKbKeys=new Set();
+
+window.addEventListener('keydown', e=>{
+  if(e.repeat||e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.key==='z'||e.key==='Z'){
+    S.octave=clamp(S.octave-1,-4,4);
+    const el=document.getElementById('octVal');
+    if(el){ el.textContent=S.octave; el.className='nv'+(S.octave!==0?' hi':''); } return;
+  }
+  if(e.key==='x'||e.key==='X'){
+    S.octave=clamp(S.octave+1,-4,4);
+    const el=document.getElementById('octVal');
+    if(el){ el.textContent=S.octave; el.className='nv'+(S.octave!==0?' hi':''); } return;
+  }
+  const midi=KEY_MAP[e.key.toLowerCase()];
+  if(midi!==undefined&&!pressedKbKeys.has(e.key)){
+    pressedKbKeys.add(e.key);
+    Tone.start().then(()=>initAudio().then(()=>noteOn(midi,100)));
+  }
+});
+window.addEventListener('keyup', e=>{
+  const midi=KEY_MAP[e.key.toLowerCase()];
+  if(midi!==undefined){ pressedKbKeys.delete(e.key); noteOff(midi); }
+});
+
+// ── UI: PATCH GRID ────────────────────────────────────────────────────────────
+function renderPatchGrid(){
+  const grid=document.getElementById('patchGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  PATCHES.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='pb'+(i===S.patchIdx?' sel':'');
+    el.innerHTML=`<span class="pb-i">${i}</span><span class="pb-n">${p.name}</span><span class="pb-c">${p.cat}</span>`;
+    el.onclick=()=>Tone.start().then(()=>initAudio().then(()=>createSynth(i)));
+    grid.appendChild(el);
+  });
+}
+
+// ── UI: MEMORY ────────────────────────────────────────────────────────────────
+function renderMemGrid(){
+  const grid=document.getElementById('memGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  S.memSlots.forEach((slot,i)=>{
+    const el=document.createElement('div');
+    el.className='mb'+(slot?' has':'')+(i===S.curMemSlot?' cur':'');
+    el.innerHTML=`<span class="mb-n">${i+1}</span>`+
+      (slot?`<span class="mb-s">${PATCHES[slot.patchIdx]?.name||'?'}</span>`:'');
+    el.onclick=()=>{ S.curMemSlot=i; renderMemGrid(); };
+    grid.appendChild(el);
+  });
+}
+
+function saveSlot(){
+  S.memSlots[S.curMemSlot]={
+    patchIdx:S.patchIdx, octave:S.octave, transpose:S.transpose,
+    volume:S.volume, bendRange:S.bendRange,
+    ccFilter:S.ccFilter, ccReverb:S.ccReverb, ccChorus:S.ccChorus, midiCh:S.midiCh,
+  };
+  renderMemGrid();
+}
+
+async function loadSlot(){
+  const slot=S.memSlots[S.curMemSlot];
+  if(!slot) return;
+  Object.assign(S,{
+    octave:slot.octave, transpose:slot.transpose, volume:slot.volume,
+    bendRange:slot.bendRange, ccFilter:slot.ccFilter,
+    ccReverb:slot.ccReverb, ccChorus:slot.ccChorus, midiCh:slot.midiCh,
+  });
+  document.getElementById('octVal').textContent=S.octave;
+  document.getElementById('trVal').textContent=S.transpose;
+  document.getElementById('bdVal').textContent=S.bendRange;
+  document.getElementById('volSlider').value=S.volume;
+  document.getElementById('volVal').textContent=S.volume+'%';
+  document.getElementById('chsel').value=S.midiCh;
+  if(masterVol&&!S.muted) masterVol.volume.value=toDb(S.volume);
+  await initAudio();
+  await createSynth(slot.patchIdx);
+}
+
+// ── UI: NOTES ─────────────────────────────────────────────────────────────────
+function renderNotes(){
+  const disp=document.getElementById('notesDisp');
+  if(!disp) return;
+  if(S.activeNotes.size===0){ disp.innerHTML='<span class="nt-ph">—</span>'; return; }
+  disp.innerHTML=[...S.activeNotes.keys()].sort((a,b)=>a-b).map(m=>{
+    const {vel}=S.activeNotes.get(m);
+    const sus=S.sustainedNotes.has(m);
+    return `<div class="nt${sus?' sus':''}">
+      <span class="nt-n">${toName(m)}</span>
+      <div class="nt-v"><div class="nt-vb" style="width:${Math.round(vel/127*100)}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderPianoKey(rawMidi, on){
+  const el=document.querySelector(`[data-midi="${rawMidi}"]`);
+  if(el) el.classList.toggle('pr', on);
+}
+
+// ── UI: PIANO ─────────────────────────────────────────────────────────────────
+function buildPiano(){
+  const pno=document.getElementById('pno');
+  const start=60, end=84;
+  const whites=[];
+  for(let m=start;m<=end;m++) if(!isSharp(m)) whites.push(m);
+  whites.forEach(m=>{
+    const k=document.createElement('div');
+    k.className='wk'; k.dataset.midi=m;
+    const kb=Object.keys(KEY_MAP).find(k=>KEY_MAP[k]===m);
+    if(kb){ const lbl=document.createElement('div'); lbl.className='kl'; lbl.textContent=kb.toUpperCase(); k.appendChild(lbl); }
+    k.addEventListener('pointerdown',e=>{ e.preventDefault(); Tone.start().then(()=>initAudio().then(()=>noteOn(m,100))); });
+    k.addEventListener('pointerup',()=>noteOff(m));
+    k.addEventListener('pointerleave',()=>{ if(S.activeNotes.has(m)) noteOff(m); });
+    pno.appendChild(k);
+  });
+  for(let m=start;m<=end;m++){
+    if(!isSharp(m)) continue;
+    const wBefore=whites.filter(w=>w<m).length;
+    const k=document.createElement('div');
+    k.className='bk'; k.dataset.midi=m;
+    k.style.left=(wBefore*26-9)+'px';
+    k.addEventListener('pointerdown',e=>{ e.preventDefault(); Tone.start().then(()=>initAudio().then(()=>noteOn(m,100))); });
+    k.addEventListener('pointerup',()=>noteOff(m));
+    k.addEventListener('pointerleave',()=>{ if(S.activeNotes.has(m)) noteOff(m); });
+    pno.appendChild(k);
+  }
+}
+
+// ── UI: SELECTS ───────────────────────────────────────────────────────────────
+function buildChannelSelect(){
+  const sel=document.getElementById('chsel');
+  const o=document.createElement('option'); o.value=0; o.textContent='All'; sel.appendChild(o);
+  for(let i=1;i<=16;i++){ const op=document.createElement('option'); op.value=i; op.textContent=i; sel.appendChild(op); }
+  sel.value=S.midiCh;
+  sel.onchange=()=>{ S.midiCh=parseInt(sel.value); };
+}
+
+function buildProgramSelect(){
+  const sel=document.getElementById('pcsel');
+  PATCHES.forEach((p,i)=>{
+    const o=document.createElement('option'); o.value=i; o.textContent=i+': '+p.name; sel.appendChild(o);
+  });
+  sel.value=S.patchIdx;
+  sel.onchange=()=>Tone.start().then(()=>initAudio().then(()=>createSynth(parseInt(sel.value))));
+}
+
+// ── UI: MONITOR BARS ──────────────────────────────────────────────────────────
+function setMon(barId, valId, pct, raw){
+  const b=document.getElementById(barId); if(b) b.style.width=clamp(pct,0,100)+'%';
+  const v=document.getElementById(valId); if(v) v.textContent=Math.round(raw);
+}
+
+// ── UI: +/- CONTROLS ──────────────────────────────────────────────────────────
+function bindNum(dnId, upId, valId, key, min, max){
+  const vEl=document.getElementById(valId);
+  const upd=d=>{
+    S[key]=clamp(S[key]+d, min, max);
+    if(vEl){ vEl.textContent=S[key]; vEl.className='nv'+(S[key]!==0?' hi':''); }
+  };
+  document.getElementById(dnId).onclick=()=>upd(-1);
+  document.getElementById(upId).onclick=()=>upd(+1);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer=null;
+function showToast(msg){ const t=document.getElementById('toast'); if(t){ t.textContent=msg; t.className='toast show'; } clearTimeout(toastTimer); }
+function hideToast(){ toastTimer=setTimeout(()=>{ const t=document.getElementById('toast'); if(t) t.className='toast'; },300); }
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+renderPatchGrid();
+renderMemGrid();
+buildPiano();
+buildChannelSelect();
+buildProgramSelect();
+initMidi();
+
+bindNum('octDn','octUp','octVal','octave',   -4,  4);
+bindNum('trDn', 'trUp', 'trVal', 'transpose',-12,12);
+bindNum('bdDn', 'bdUp', 'bdVal', 'bendRange', 1, 24);
+
+document.getElementById('volSlider').oninput=function(){
+  S.volume=parseInt(this.value);
+  document.getElementById('volVal').textContent=S.volume+'%';
+  if(!S.muted&&masterVol) masterVol.volume.rampTo(toDb(S.volume),0.02);
+};
+document.getElementById('mutBtn').onclick=function(){
+  S.muted=!S.muted;
+  this.textContent=S.muted?'Unmute':'Mute';
+  this.className='mutbtn'+(S.muted?' on':'');
+  if(masterVol) masterVol.volume.value=S.muted?-Infinity:toDb(S.volume);
+};
+document.getElementById('btnSave').onclick =saveSlot;
+document.getElementById('btnLoad').onclick =loadSlot;
+document.getElementById('btnClear').onclick=()=>{ S.memSlots[S.curMemSlot]=null; renderMemGrid(); };
+
+// Init monitor bar defaults
+setMon('m-fil','m-fil-v',100,127);
+setMon('m-rev','m-rev-v',31,40);
+setMon('m-exp','m-exp-v',100,127);
+</script>
+</body>
+</html>
