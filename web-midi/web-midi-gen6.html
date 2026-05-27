@@ -614,46 +614,57 @@ function _buildGeneratedEntry(id) {
 async function activateSlot(slotIdx) {
   if(S.switching) return;
   S.switching = true;
-  const id  = BANK[slotIdx];
-  const def = getDef(id);
-  if(!def){ S.switching=false; return; }
+  try {
+    const id  = BANK[slotIdx];
+    const def = getDef(id);
+    if(!def) return;
 
-  _releaseAll(true);
+    _releaseAll(true);
 
-  // Disconnect old melodic source
-  if(_src){ try{_src.disconnect();}catch(e){} _src=null; }
+    // Disconnect old melodic source
+    if(_src){ try{_src.disconnect();}catch(e){} _src=null; }
 
-  if(def.type==='drums'){
-    if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
-    _drum = _buildDrum(id);
-    _applyFX(def);
-  } else {
-    if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
-    let entry = _cache.get(id);
-    if(!entry){
-      entry = def.type==='sampled' ? _buildSampledEntry(id) : _buildGeneratedEntry(id);
-      _cache.set(id, entry);
+    if(def.type==='drums'){
+      if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
+      _drum = _buildDrum(id);
+      // Drums bypass the main effects filter — set filter fully open
+      _applyFX({fHz:20000, fQ:0.2, rev:0.10, cho:0});
+    } else {
+      if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
+      let entry = _cache.get(id);
+      if(!entry){
+        entry = def.type==='sampled' ? _buildSampledEntry(id) : _buildGeneratedEntry(id);
+        _cache.set(id, entry);
+      }
+      _src = entry.node;
+      _src.connect(_filter);
+      _applyFX(def);
+      _applyDetune(S.pbCents); // restore pitch bend
     }
-    _src = entry.node;
-    _src.connect(_filter);
-    _applyFX(def);
-    _applyDetune(S.pbCents); // restore pitch bend
-  }
 
-  playSlot   = slotIdx;
-  S.bendRange = def.bend || 2;
-  S.switching = false;
-  $('bdV').textContent = S.bendRange;
-  _refreshAll();
+    playSlot    = slotIdx;
+    S.bendRange = def.bend || 2;
+    $('bdV').textContent = S.bendRange;
+    _refreshAll();
+  } finally {
+    // ALWAYS reset switching — even if an error is thrown
+    S.switching = false;
+  }
 }
 
 function _applyFX(def){
   if(!_filter||!_reverb||!_chorus) return;
-  const fcc = S.ccFilter/127;
-  _filter.frequency.value = _clamp(100+(def.fHz-100)*fcc, 100, 22000);
-  _filter.Q.value = def.fQ||0.5;
-  _reverb.wet.value  = _clamp((def.rev||0.2)*(S.ccReverb/127)*2,  0, 0.95);
-  _chorus.wet.value  = _clamp((def.cho||0)  *(S.ccChorus/127)*2, 0, 1.00);
+  // Guard: drum kit defs don't carry fHz/fQ/rev/cho — use safe defaults
+  const fHz = (def.fHz != null && isFinite(def.fHz)) ? def.fHz : 20000;
+  const fQ  = (def.fQ  != null && isFinite(def.fQ))  ? def.fQ  : 0.3;
+  const rev = (def.rev != null && isFinite(def.rev))  ? def.rev : 0.10;
+  const cho = (def.cho != null && isFinite(def.cho))  ? def.cho : 0;
+  const fcc = S.ccFilter / 127;
+  const hz  = _clamp(100 + (fHz - 100) * fcc, 100, 22000);
+  _filter.frequency.value = hz;
+  _filter.Q.value         = fQ;
+  _reverb.wet.value       = _clamp(rev * (S.ccReverb / 127) * 2, 0, 0.95);
+  _chorus.wet.value       = _clamp(cho * (S.ccChorus / 127) * 2, 0, 1.00);
 }
 
 // ── PITCH BEND (fixed) ───────────────────────────────────────────────
