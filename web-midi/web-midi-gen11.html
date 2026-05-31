@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MIDI Synthesizer v7</title>
+<title>MIDI Synthesizer v11</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -462,10 +462,7 @@ const S = {
   ccFilter:127, ccReverb:40, ccChorus:40, ccExpr:127,
   memSlots: new Array(8).fill(null), curMem:0,
   ready:false, switching:false,
-  // Metronome MIDI control state:
-  // pbMetroDir: last bend direction applied while sustain held (0=none, 1=up, -1=down)
-  // used for edge-trigger: change fires when wheel returns to center, not continuously.
-  pbMetroDir: 0,
+  modVal:0,
 };
 
 const METRO = {run:false, bpm:120, ts:4, vol:75, beat:-1, taps:[]};
@@ -844,20 +841,18 @@ function _setSustain(on){
   const dot = $('susdot'); if(dot) dot.className = 'susdot'+(on?' on':'');
   const v   = $('susval'); if(v) v.textContent = on?'On':'Off';
   if(!on){ const h=[...S.sustainedNotes]; S.sustainedNotes.clear(); h.forEach(m=>_releaseNote(m)); }
+  _bpmIvCheck();
 }
 
 // ── CC / MIDI ────────────────────────────────────────────────────────
 function _handleCC(n, v){
   const def = getDef(BANK[playSlot])||{fHz:5000,rev:0.2,cho:0};
   switch(n){
-    case 1:  if(_vib)_vib.depth.rampTo((v/127)*0.55,0.05); _mon('m-mod','m-mod-v',v/127*100,v); break;
+    case 1:  S.modVal=v; _bpmIvCheck(); if(_vib)_vib.depth.rampTo((v/127)*0.55,0.05); _mon('m-mod','m-mod-v',v/127*100,v); break;
     case 7:
-      if(S.sustainOn){
-        // ── METRONOME START/STOP via VOLUME knob while sustain held ──
-        // Vol knob to 0  → stop metronome
-        // Vol knob to 127 → start metronome (if not already running)
-        if(v === 0)        { if(METRO.run)  stopMetro(); _toast('Metro stop'); }
-        else if(v === 127) { if(!METRO.run) startMetro(); _toast('Metro start'); }
+      if(S.sustainOn && S.modVal >= 64){
+        if(v < 64) { if(METRO.run)   stopMetro();                          _toast('Metro STOP'); }
+        else       { if(S.ready && !METRO.run) startMetro();               _toast('Metro START'); }
         break;
       }
       S.volume=Math.round(v/127*100); if(!S.muted&&_masterVol)_masterVol.volume.rampTo(_toDb(S.volume),0.02);
@@ -872,52 +867,54 @@ function _handleCC(n, v){
   }
 }
 
-function _handlePB(lsb, msb){
-  const raw  = (msb<<7)|lsb;
-  const norm = (raw-8192)/8192;  // -1 … +1
+// ── PITCH BEND + METRO MIDI CONTROL ─────────────────────────────────
+// State: latest raw 14-bit PB value and interval handle
+let _pbRaw14   = 8192;   // center
+let _bpmIv     = null;   // setInterval handle
 
-  if(S.sustainOn){
-    // ── METRONOME TEMPO CONTROL ──────────────────────────────────────
-    // Sustain pedal held = memory modifier. Pitch wheel controls BPM.
-    // Bend > 0 → faster, bend < 0 → slower.
-    // Small bend (|norm| < 0.4) = ±1 BPM, large bend (|norm| >= 0.4) = ±5 BPM.
-    // Edge-triggered on return to center so holding the wheel doesn't spam.
-    const deadzone = 0.08;  // ignore tiny center wobble
-    if(Math.abs(norm) > deadzone){
-      const dir = norm > 0 ? 1 : -1;
-      if(S.pbMetroDir !== dir){
-        // New direction committed — apply BPM change immediately on direction change
-        S.pbMetroDir = dir;
-        const step = Math.abs(norm) >= 0.4 ? 5 : 1;
-        METRO.bpm = _clamp(METRO.bpm + dir * step, 20, 300);
-        $('bpmIn').value = METRO.bpm;
-        _toast(`BPM ${dir>0?'+':''}${dir*step} → ${METRO.bpm}`);
-        if(METRO.run){ stopMetro(); startMetro(); }
-      }
-    } else {
-      // Wheel back to center — reset so next move triggers again
-      S.pbMetroDir = 0;
-    }
-    // Update monitor display but do NOT apply detune
+// Called every 1000ms while (sustainOn AND modVal>=64 AND wheel off-center)
+function _bpmTick(){
+  if(!S.sustainOn || S.modVal < 64 || !S.ready){
+    clearInterval(_bpmIv); _bpmIv = null; return;
+  }
+  const delta = _pbRaw14 - 8192;
+  if(Math.abs(delta) < 512) return;
+  const dir  = delta > 0 ? 1 : -1;
+  const step = Math.abs(delta) >= 8191 ? 5 : 1;
+  METRO.bpm  = _clamp(METRO.bpm + dir*step, 20, 300);
+  $('bpmIn').value = METRO.bpm;
+  _toast('BPM ' + (dir>0?'+':'−') + step + ' → ' + METRO.bpm);
+  if(METRO.run){ stopMetro(); startMetro(); }
+}
+
+async function _bpmIvCheck(){
+  const want = S.sustainOn && S.modVal >= 64;
+  // Auto-activate audio when sustain+mod>=64
+  if(want && !S.ready){ await initAudio(); }
+  if(want  && !_bpmIv) _bpmIv = setInterval(_bpmTick, 1000);
+  if(!want &&  _bpmIv){ clearInterval(_bpmIv); _bpmIv = null; }
+}
+
+function _handlePB(lsb, msb){
+  _pbRaw14 = (msb<<7)|lsb;
+  _bpmIvCheck();
+
+  // Normal pitch bend — only when sustain not held as modifier
+  if(!S.sustainOn){
+    const norm = (_pbRaw14-8192)/8192;
+    _applyDetune(norm * S.bendRange * 100);
     const pct = _clamp(norm*50,-50,50);
-    const fill = $('m-pb');
+    const fill=$('m-pb');
     if(fill){ if(norm>=0){fill.style.left='50%';fill.style.width=pct+'%';}
               else{fill.style.left=(50+pct)+'%';fill.style.width=(-pct)+'%';} }
-    const vEl = $('m-pb-v');
-    if(vEl) vEl.textContent = `BPM ctrl: ${METRO.bpm}`;
-    return;
+    const vEl=$('m-pb-v');
+    if(vEl) vEl.textContent=(Math.round(norm*S.bendRange*10)/10).toFixed(1)+' st';
+  } else {
+    const vEl=$('m-pb-v');
+    if(vEl) vEl.textContent='BPM: '+METRO.bpm;
   }
-
-  // Normal pitch bend — no modifier held
-  S.pbMetroDir = 0;
-  _applyDetune(norm * S.bendRange * 100);
-  const pct = _clamp(norm*50,-50,50);
-  const fill = $('m-pb');
-  if(fill){ if(norm>=0){fill.style.left='50%';fill.style.width=pct+'%';}
-            else{fill.style.left=(50+pct)+'%';fill.style.width=(-pct)+'%';} }
-  const vEl = $('m-pb-v');
-  if(vEl) vEl.textContent=(Math.round(norm*S.bendRange*10)/10).toFixed(1)+' st';
 }
+
 
 function _handleMsg(e){
   const d=e.data; if(!d||d.length<2) return;
