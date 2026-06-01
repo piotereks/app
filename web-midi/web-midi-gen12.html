@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MIDI Synthesizer v11</title>
+<title>MIDI Synthesizer v12</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -465,6 +465,35 @@ const S = {
   modVal:0,
 };
 
+// ── DEBUG FLAG ──────────────────────────────────────────────────────
+let debugFlag = 1; // Set to 0 to disable debug logging
+window.debugFlag = debugFlag; // Export to window for console access
+
+// ── PERSISTENCE (localStorage) ───────────────────────────────────────
+function _saveState(){
+  const state = {
+    bpm: METRO.bpm,
+    ts: METRO.ts,
+    playSlot: playSlot
+  };
+  localStorage.setItem('midiSynthState', JSON.stringify(state));
+  if(debugFlag) console.log(`%c[PERSIST] Saved: BPM=${state.bpm}, TS=${state.ts}, Slot=${state.playSlot}`, 'color:#0099ff');
+}
+
+function _loadState(){
+  try {
+    const saved = localStorage.getItem('midiSynthState');
+    if(!saved) return;
+    const state = JSON.parse(saved);
+    if(state.bpm) METRO.bpm = _clamp(state.bpm, 20, 300);
+    if(state.ts) METRO.ts = state.ts;
+    if(state.playSlot !== undefined) playSlot = _clamp(state.playSlot, 0, 15);
+    if(debugFlag) console.log(`%c[PERSIST] Loaded: BPM=${METRO.bpm}, TS=${METRO.ts}, Slot=${playSlot}`, 'color:#0099ff');
+  } catch(e) {
+    console.warn('Failed to load persisted state', e);
+  }
+}
+
 const METRO = {run:false, bpm:120, ts:4, vol:75, beat:-1, taps:[]};
 let mAcc=null, mTick=null, mGain=null;
 let mStartTime=0, mBeatDur=0;
@@ -710,6 +739,10 @@ async function activateSlot(slotIdx) {
     // Invalidate hot cache whenever the active slot changes
     _invalidateHotCache();
     _refreshAll();
+    
+    // Persist instrument choice
+    _saveState();
+    if(debugFlag) console.log(`%c[PERSIST] Instrument slot ${slotIdx+1} selected`, 'color:#0099ff');
   } finally {
     S.switching = false;
   }
@@ -837,6 +870,7 @@ function _releaseAll(force=false){
 }
 
 function _setSustain(on){
+  if(debugFlag) console.log(`%c[SUSTAIN] Changed to ${on} (was ${S.sustainOn})`, 'color:#00ffff');
   S.sustainOn = on;
   const dot = $('susdot'); if(dot) dot.className = 'susdot'+(on?' on':'');
   const v   = $('susval'); if(v) v.textContent = on?'On':'Off';
@@ -846,16 +880,50 @@ function _setSustain(on){
 
 // ── CC / MIDI ────────────────────────────────────────────────────────
 function _handleCC(n, v){
+  // Make debugFlag accessible and update window reference
+  window.debugFlag = debugFlag;
+  
   const def = getDef(BANK[playSlot])||{fHz:5000,rev:0.2,cho:0};
+  if(debugFlag) console.log(`%c[CC] n=${n} v=${v} sustain=${S.sustainOn} mod=${S.modVal} ready=${S.ready}`, 'color:#00ff00');
+  
   switch(n){
-    case 1:  S.modVal=v; _bpmIvCheck(); if(_vib)_vib.depth.rampTo((v/127)*0.55,0.05); _mon('m-mod','m-mod-v',v/127*100,v); break;
+    case 1:  
+      S.modVal=v; 
+      if(debugFlag) console.log(`%c[CC1-MOD] Updated modVal=${v}, calling _bpmIvCheck()`, 'color:#00ff00');
+      _bpmIvCheck(); 
+      if(_vib)_vib.depth.rampTo((v/127)*0.55,0.05); 
+      _mon('m-mod','m-mod-v',v/127*100,v); 
+      break;
     case 7:
-      if(S.sustainOn && S.modVal >= 64){
-        _bpmIvCheck(); // Auto-activate audio if needed, just like CC1 and PB
-        if(v < 64) { if(METRO.run)   stopMetro();                          _toast('Metro STOP'); }
-        else       { if(S.ready && !METRO.run) startMetro();               _toast('Metro START'); }
+      // TWO INDEPENDENT TRIGGERS:
+      // 1. Sustain + Modulation (CC1) >= 64: adjusts BPM via pitch bend
+      // 2. Sustain + Volume (CC7) at max (>=64): starts/stops metro directly
+      if(debugFlag) console.log(`%c[CC7-VOL] Volume CC: v=${v}, sustain=${S.sustainOn}, mod=${S.modVal}`, 'color:#ffff00');
+      
+      // VOLUME TRIGGER: Sustain + Volume (independent of modulation)
+      if(S.sustainOn){
+        if(debugFlag) console.log(`%c[CC7-VOL] >>> Sustain is ON, volume=${v}`, 'color:#ff00ff');
+        _bpmIvCheck(); // Auto-activate audio if needed
+        if(debugFlag) console.log(`%c[CC7-VOL] After _bpmIvCheck: ready=${S.ready}`, 'color:#ff00ff');
+        
+        if(v >= 64) { 
+          if(debugFlag) console.log(`%c[CC7-VOL] >>> Vol >= 64: STARTING METRO (ready=${S.ready}, run=${METRO.run})`, 'color:#ff0000');
+          if(S.ready && !METRO.run) {
+            startMetro();
+            if(debugFlag) console.log(`%c[CC7-VOL] >>> Metro started!`, 'color:#ff0000');
+          } else {
+            if(debugFlag) console.log(`%c[CC7-VOL] >>> Metro NOT started: ready=${S.ready}, run=${METRO.run}`, 'color:#ff0000');
+          }
+          _toast('Metro START'); 
+        }
+        else { 
+          if(debugFlag) console.log(`%c[CC7-VOL] >>> Vol < 64: STOPPING METRO`, 'color:#ff0000');
+          if(METRO.run)   stopMetro();
+          _toast('Metro STOP'); 
+        }
         break;
       }
+      // Normal volume control (no sustain)
       S.volume=Math.round(v/127*100); if(!S.muted&&_masterVol)_masterVol.volume.rampTo(_toDb(S.volume),0.02);
       $('volSlider').value=S.volume; $('volV').textContent=S.volume+'%'; break;
     case 11: S.ccExpr=v; if(_exprGain&&!S.muted)_exprGain.gain.rampTo(v/127,0.02); _mon('m-exp','m-exp-v',v/127*100,v); break;
@@ -875,35 +943,61 @@ let _bpmIv     = null;   // setInterval handle
 
 // Called every 1000ms while (sustainOn AND modVal>=64 AND wheel off-center)
 function _bpmTick(){
-  if(!S.sustainOn || S.modVal < 64 || !S.ready){
+  const delta = _pbRaw14 - 8192;
+  if(debugFlag) console.log(`%c[BPM-TICK] sustain=${S.sustainOn} ready=${S.ready} delta=${delta} metro.run=${METRO.run}`, 'color:#0080ff');
+  if(!S.sustainOn || !S.ready){
+    if(debugFlag) console.log(`%c[BPM-TICK] >>> Conditions not met (sustain=${S.sustainOn}, ready=${S.ready}), stopping interval`, 'color:#ff0000');
     clearInterval(_bpmIv); _bpmIv = null; return;
   }
-  const delta = _pbRaw14 - 8192;
-  if(Math.abs(delta) < 512) return;
+  if(Math.abs(delta) < 512) {
+    if(debugFlag) console.log(`%c[BPM-TICK] PB not at extreme (${Math.abs(delta)}<512), skipping`, 'color:#0080ff');
+    return;
+  }
   const dir  = delta > 0 ? 1 : -1;
   const step = Math.abs(delta) >= 8191 ? 5 : 1;
   METRO.bpm  = _clamp(METRO.bpm + dir*step, 20, 300);
   $('bpmIn').value = METRO.bpm;
+  _saveState(); // Always save BPM changes (both UI and MIDI)
+  if(debugFlag) console.log(`%c[BPM-TICK] >>> Adjusted BPM by ${dir*step} → ${METRO.bpm}`, 'color:#00ffff');
   _toast('BPM ' + (dir>0?'+':'−') + step + ' → ' + METRO.bpm);
-  // Pitch Bend trigger: start metro if at extreme position and metro not running
-  if(!METRO.run && Math.abs(delta) >= 8191) {
-    startMetro();
-    _toast('Metro START (pitch bend trigger)');
-  } else if(METRO.run){ 
+  // Restart metro only if it's running to sync with new BPM
+  if(METRO.run){ 
+    if(debugFlag) console.log(`%c[BPM-TICK] >>> Metro running - restarting for BPM sync`, 'color:#00ffff');
     stopMetro(); startMetro(); 
   }
 }
 
 async function _bpmIvCheck(){
-  const want = S.sustainOn && S.modVal >= 64;
+  const want = S.sustainOn;
+  if(debugFlag) console.log(`%c[BPM-CHECK] want=${want} (sustain=${S.sustainOn}), ready=${S.ready}, interval=${_bpmIv?'ACTIVE':'inactive'}`, 'color:#00ff00');
   // Auto-activate audio when sustain+mod>=64
-  if(want && !S.ready){ await initAudio(); }
-  if(want  && !_bpmIv) _bpmIv = setInterval(_bpmTick, 1000);
-  if(!want &&  _bpmIv){ clearInterval(_bpmIv); _bpmIv = null; }
+  if(want && !S.ready){ 
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Auto-activating audio...`, 'color:#ff0000');
+    await initAudio(); 
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Audio activated, ready=${S.ready}`, 'color:#ff0000');
+  }
+  if(want  && !_bpmIv) {
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Starting BPM interval (sustain=${S.sustainOn}, ready=${S.ready})`, 'color:#ff0000');
+    _bpmIv = setInterval(_bpmTick, 1000);
+  }
+  if(!want &&  _bpmIv){ 
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Stopping BPM interval (sustain=${S.sustainOn})`, 'color:#ff0000');
+    clearInterval(_bpmIv); 
+    _bpmIv = null; 
+  }
 }
 
 function _handlePB(lsb, msb){
   _pbRaw14 = (msb<<7)|lsb;
+  const delta = _pbRaw14 - 8192;
+  if(debugFlag) console.log(`%c[PB] raw14=${_pbRaw14} delta=${delta} (${delta>=8191?'MAX':delta<=-8191?'MIN':'center'}) sustain=${S.sustainOn} ready=${S.ready}`, 'color:#0080ff');
+  
+  // PITCH BEND TRIGGER: Works with Sustain to control metro tempo
+  // When sustain active: PB at extremes changes metro tempo
+  if(S.sustainOn){
+    if(debugFlag) console.log(`%c[PB-TRIGGER] >>> Sustain active, PB=${delta}`, 'color:#ff00ff');
+  }
+  
   _bpmIvCheck();
 
   // Normal pitch bend — only when sustain not held as modifier
@@ -927,6 +1021,10 @@ function _handleMsg(e){
   const d=e.data; if(!d||d.length<2) return;
   const st=d[0], d1=d[1], d2=d.length>2?d[2]:0;
   const cmd=st&0xf0, ch=(st&0x0f)+1;
+  const cmdNames={0x90:'NOTE-ON',0x80:'NOTE-OFF',0xb0:'CC',0xe0:'PB',0xc0:'PROG',0xd0:'AFTERTOUCH'};
+  const cmdName = cmdNames[cmd] || `0x${cmd.toString(16)}`;
+  if(debugFlag) console.log(`%c[MIDI] ch=${ch} cmd=${cmdName} d1=${d1} d2=${d2}`, 'color:#ff00aa');
+  
   if(ch===10&&S.ready&&cmd===0x90&&d2>0){
     if(_drum){_drum.hit(d1,Tone.now(),d2/127);_flashPad(d1);} return;
   }
@@ -1005,8 +1103,17 @@ function _updateMetronomeVisuals() {
 }
 
 function startMetro() {
-  if (!S.ready) { _toast('Activate audio first'); return; }
-  if (METRO.run) { stopMetro(); return; }
+  if(debugFlag) console.log(`%c[METRO-START] Called: ready=${S.ready}, run=${METRO.run}`, 'color:#ffff00');
+  if (!S.ready) { 
+    if(debugFlag) console.log(`%c[METRO-START] >>> FAILED: Audio not ready`, 'color:#ff0000');
+    _toast('Activate audio first'); 
+    return; 
+  }
+  if (METRO.run) { 
+    if(debugFlag) console.log(`%c[METRO-START] >>> Already running, stopping first`, 'color:#ffff00');
+    stopMetro(); 
+    return; 
+  }
   mBeatDur = (METRO.ts === 6) ? (60 / METRO.bpm) / 2 : (60 / METRO.bpm);
   mStartTime = Tone.context.currentTime + 0.1;
   mNextBeatToSchedule = 0;
@@ -1014,16 +1121,19 @@ function startMetro() {
   METRO.beat = -1;
   METRO.run = true;
   _metroWorker.postMessage('start');
+  if(debugFlag) console.log(`%c[METRO-START] >>> STARTED! bpm=${METRO.bpm}`, 'color:#00ff00');
   const b = $('metroBtn');
   if (b) { b.textContent = '■ Stop'; b.className = 'mbtn run'; }
 }
 
 function stopMetro() {
+  if(debugFlag) console.log(`%c[METRO-STOP] Called: run=${METRO.run}`, 'color:#ffff00');
   METRO.run = false;
   METRO.beat = -1;
   _metroWorker.postMessage('stop');
   mCurrentBeat = -1;
   _renderBeatDots();
+  if(debugFlag) console.log(`%c[METRO-STOP] >>> STOPPED`, 'color:#00ff00');
   const b = $('metroBtn');
   if (b) { b.textContent = '▶ Start'; b.className = 'mbtn'; }
 }
@@ -1072,6 +1182,7 @@ window.addEventListener('keydown', e => {
 
   // Octave shortcuts — check before anything else
   const k = e.key;
+  if (debugFlag && (k.toLowerCase() !== 'z' && k.toLowerCase() !== 'x')) console.log(`[KEY-DOWN] key='${k}' ready=${S.ready}`);
   if (k === 'z' || k === 'Z') { _adjOct(-1); return; }
   if (k === 'x' || k === 'X') { _adjOct(+1); return; }
 
@@ -1079,6 +1190,7 @@ window.addEventListener('keydown', e => {
   const midi = _hotMap ? _hotMap[k.toLowerCase()] : undefined;
   if (midi !== undefined && !_pressed.has(k)) {
     _pressed.add(k);
+    if (debugFlag) console.log(`[KEY-DOWN] Mapped to MIDI ${midi}, ready=${S.ready}, triggering noteOn`);
     if (S.ready) noteOn(midi, 100);
   }
 }, { passive: false });
@@ -1086,6 +1198,7 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => {
   const midi = _hotMap ? _hotMap[e.key.toLowerCase()] : undefined;
   if (midi !== undefined) {
+    if (debugFlag) console.log(`[KEY-UP] key='${e.key}' mapped to MIDI ${midi}`);
     _pressed.delete(e.key);
     noteOff(midi);
   }
@@ -1399,6 +1512,9 @@ function _updateSlotSel(){
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────
+// Load persisted state FIRST
+_loadState();
+
 _buildPiano($('pno'), 48,83,'wk','bk',34,22,66,'kl');
 _buildDrumGrid($('drumGrid'),'dp','dp-n','dp-k');
 _buildPickerDropdowns();
@@ -1411,6 +1527,14 @@ _refreshBadges();
 // Initialize hot cache for the default slot
 _invalidateHotCache();
 initMidi();
+
+// Sync UI with loaded state
+$('bpmIn').value = METRO.bpm;
+$('timeSig').value = METRO.ts;
+$('slotSel').value = playSlot;
+_renderBeatDots(); // Update beat dots to match loaded meter
+_updateSlotSel();
+if(debugFlag) console.log(`%c[BOOT] UI synced: BPM=${METRO.bpm}, TS=${METRO.ts}, Slot=${playSlot}`, 'color:#0099ff');
 
 _bindNum('octDn','octUp','octV','octave',   -4, 4);
 _bindNum('trDn', 'trUp', 'trV', 'transpose',-12,12);
@@ -1441,10 +1565,14 @@ $('metroBtn').addEventListener('click',startMetro);
 $('tapBtn').addEventListener('click',tapTempo);
 $('bpmIn').addEventListener('input',function(){
   METRO.bpm=_clamp(parseInt(this.value)||120,20,300);
+  _saveState(); // Persist BPM
+  if(debugFlag) console.log(`%c[PERSIST] BPM changed to ${METRO.bpm}`, 'color:#0099ff');
   if(METRO.run){stopMetro();setTimeout(startMetro,60);}
 });
 $('timeSig').addEventListener('change',function(){
   METRO.ts=parseInt(this.value);
+  _saveState(); // Persist meter
+  if(debugFlag) console.log(`%c[PERSIST] Meter changed to ${METRO.ts}`, 'color:#0099ff');
   const was=METRO.run;
   if(was){stopMetro();setTimeout(startMetro,60);}else _renderBeatDots();
 });
@@ -1511,6 +1639,17 @@ window.noteOn = noteOn;
 window.noteOff = noteOff;
 window._releaseAll = _releaseAll;
 window.activateSlot = activateSlot;
+
+// Export debugFlag with getter/setter
+Object.defineProperty(window, 'debugFlag', {
+  get() { return debugFlag; },
+  set(val) { debugFlag = val; console.log(`Debug flag set to ${val}`); }
+});
+
+// Export persistence functions
+window._saveState = _saveState;
+window._loadState = _loadState;
+window._clearState = () => { localStorage.removeItem('midiSynthState'); console.log('Persisted state cleared'); };
 
 })();
 </script>
