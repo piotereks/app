@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDI Synthesizer v12</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#eeecea;--bg2:#e3e1dc;--bg3:#d0cec6;
+  --card:#fafaf7;--border:#cac6bc;--border2:#aaa69c;
+  --tx:#1c1a17;--tx2:#555250;--tx3:#88847e;
+  --blue:#2563eb;--bluel:#dbeafe;--bluedk:#1e3a8a;
+  --green:#059669;--greenl:#d1fae5;
+  --amber:#d97706;--amberl:#fef3c7;--amberdk:#92400e;
+  --red:#dc2626;--redl:#fee2e2;--reddk:#7f1d1d;
+  --purple:#7c3aed;--purplel:#ede9fe;--purpledk:#4c1d95;
+  --r:6px;--rl:10px;--sh:0 1px 3px #00000010;
+}
+body{font-family:'JetBrains Mono','Fira Code','Courier New',monospace;font-size:11px;line-height:1.5;background:var(--bg);color:var(--tx);min-height:100vh}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.layout{display:flex;flex:1;overflow:hidden}
+.col-l{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;padding:12px;gap:10px}
+.col-r{width:282px;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto;padding:12px;gap:10px;background:var(--bg2);border-left:.5px solid var(--border)}
+@media(max-width:820px){.app{height:auto;overflow:auto}.layout{flex-direction:column;height:auto;overflow:visible}.col-l,.col-r{overflow:visible;padding:10px}.col-r{width:100%;border-left:none;border-top:.5px solid var(--border)}}
+.card{background:var(--card);border:.5px solid var(--border);border-radius:var(--rl);padding:11px 13px;box-shadow:var(--sh)}
+.ct{font-size:9px;letter-spacing:.10em;text-transform:uppercase;color:var(--tx3);margin-bottom:9px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.badge{font-size:8px;padding:1px 7px;border-radius:10px;border:.5px solid transparent;white-space:nowrap;letter-spacing:.03em}
+.badge.sampled{background:var(--bluel);color:var(--bluedk);border-color:var(--blue)}
+.badge.synth{background:var(--greenl);color:#065f46;border-color:var(--green)}
+.badge.drums{background:var(--purplel);color:var(--purpledk);border-color:var(--purple)}
+.badge.loading{background:var(--amberl);color:var(--amberdk);border-color:var(--amber);animation:pulse 1s ease-in-out infinite}
+.badge.ok{background:var(--greenl);color:#065f46;border-color:var(--green)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* bank grid */
+.bgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
+@media(min-width:560px) and (max-width:819px){.bgrid{grid-template-columns:repeat(6,1fr)}}
+@media(min-width:1100px){.bgrid{grid-template-columns:repeat(8,1fr)}}
+.bs{padding:7px 4px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg2);cursor:pointer;text-align:center;transition:all .12s;display:flex;flex-direction:column;align-items:center;gap:1px;min-height:56px;justify-content:center;position:relative;user-select:none}
+.bs-n{position:absolute;top:3px;left:5px;font-size:7px;color:var(--tx3)}
+.bs-ic{font-size:13px;line-height:1}
+.bs-nm{font-size:9px;font-weight:700;color:var(--tx);font-family:inherit;line-height:1.2}
+.bs-ct{font-size:7px;color:var(--tx3)}
+.bs-ty{font-size:6px;padding:0 3px;border-radius:4px;margin-top:1px}
+.bs-ty.sampled{background:var(--bluel);color:var(--bluedk)}.bs-ty.synth{background:var(--greenl);color:#065f46}.bs-ty.drums{background:var(--purplel);color:var(--purpledk)}
+.bs:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 2px 8px #00000014}
+.bs.sel{background:var(--bluel);border-color:var(--blue)}.bs.sel .bs-nm{color:var(--bluedk)}
+.bs.sel.dsel{background:var(--purplel);border-color:var(--purple)}.bs.sel.dsel .bs-nm{color:var(--purpledk)}
+.bs.busy{border-color:var(--amber);background:#fff8e1}
+
+/* picker */
+.picker{padding:10px 12px;border-radius:var(--r);background:var(--bg);border:.5px solid var(--border)}
+.pk-info{font-size:10px;color:var(--tx2);margin-bottom:8px}
+.pk-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+select.pksel{font-size:10px;font-family:inherit;padding:5px 7px;border-radius:var(--r);border:.5px solid var(--border);background:var(--card);color:var(--tx);flex:1;min-width:120px}
+.pk-btn{padding:5px 12px;border-radius:var(--r);border:.5px solid var(--blue);background:var(--bluel);color:var(--bluedk);font-size:10px;font-family:inherit;cursor:pointer;font-weight:700;white-space:nowrap;transition:all .15s}
+.pk-btn:hover{background:var(--blue);color:#fff}
+.pk-btn:disabled{opacity:.4;pointer-events:none}
+
+/* status */
+.sb{display:flex;align-items:center;gap:8px}
+.led{width:9px;height:9px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .25s}
+.led.ok{background:var(--green);box-shadow:0 0 0 2px #05966932}
+.led.err{background:var(--red);box-shadow:0 0 0 2px #dc262632}
+.led.warn{background:var(--amber);box-shadow:0 0 0 2px #d9770632}
+.sb-inf{flex:1;min-width:0}
+.sb-main{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-dev{font-size:9px;color:var(--tx3);margin-top:1px;overflow:hidden;text-overflow:ellipsis}
+.act{padding:5px 11px;border-radius:var(--r);border:.5px solid var(--blue);background:var(--bluel);color:var(--bluedk);font-size:10px;font-family:inherit;cursor:pointer;font-weight:700;white-space:nowrap;transition:all .15s}
+.act:hover{background:var(--blue);color:#fff}
+.act.on{background:var(--greenl);border-color:var(--green);color:#064e3b;cursor:default}
+.selrow{display:flex;align-items:center;gap:5px;margin-top:8px;flex-wrap:wrap}
+.lbl{font-size:9px;color:var(--tx3);letter-spacing:.07em;text-transform:uppercase}
+select.sc{font-size:10px;font-family:inherit;padding:3px 5px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg);color:var(--tx)}
+.latrow{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:.5px solid var(--border)}
+.latlbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.latval{font-size:11px;font-weight:700;color:var(--green);font-family:inherit}
+
+/* metro */
+.mrow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.mbpm{width:62px;font-size:26px;font-weight:700;font-family:inherit;border:none;border-bottom:.5px solid var(--border);background:transparent;color:var(--tx);outline:none;text-align:center}
+.mbpm:focus{border-bottom-color:var(--blue)}
+.bpml{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em}
+.mbtn{flex:1;padding:8px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg2);font-size:12px;cursor:pointer;color:var(--tx);font-family:inherit;font-weight:700;transition:all .12s}
+.mbtn.run{background:var(--greenl);border-color:var(--green);color:#065f46}
+.tapbtn{padding:8px 10px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg2);font-size:10px;cursor:pointer;color:var(--tx2);font-family:inherit}
+.tapbtn:active{background:var(--bg3)}
+.bdots{display:flex;gap:7px;justify-content:center;margin:10px 0}
+.bdot{width:12px;height:12px;border-radius:50%;background:var(--border);border:.5px solid var(--border2);transition:all .07s}
+.bdot.on{background:var(--blue);border-color:var(--blue);box-shadow:0 0 8px #2563eb60}
+.bdot.accent.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 8px #d9770660}
+.mrow2{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.mrow2 label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.mrow2 input[type=range]{flex:1}
+.mrow2 .vv{font-size:10px;color:var(--tx3);min-width:24px;text-align:right}
+
+/* controls */
+.crow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.crow:last-child{margin-bottom:0}
+.clbl{font-size:9px;color:var(--tx3);min-width:52px;flex-shrink:0;letter-spacing:.06em;text-transform:uppercase}
+.nc{display:flex;align-items:center;gap:4px}
+.nb{width:20px;height:20px;border-radius:50%;border:.5px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--tx);line-height:1;font-family:inherit;transition:background .1s}
+.nb:hover{background:var(--bg2)}
+.nv{font-size:13px;font-weight:700;min-width:28px;text-align:center;font-family:inherit}
+.nv.hi{color:var(--amber)}
+input[type=range]{flex:1;cursor:pointer}
+.vv{font-size:10px;color:var(--tx3);min-width:30px;text-align:right;font-family:inherit}
+.mutbtn{padding:4px 9px;border-radius:var(--r);border:.5px solid var(--border);background:transparent;font-size:10px;font-family:inherit;cursor:pointer;color:var(--tx);transition:all .12s}
+.mutbtn.on{background:var(--redl);border-color:var(--red);color:var(--reddk)}
+
+/* memory */
+.mg{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:8px}
+.mb{padding:5px 2px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg);cursor:pointer;text-align:center;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .12s}
+.mb-n{font-size:10px;font-weight:700;color:var(--tx3);font-family:inherit}
+.mb-s{font-size:7px;color:var(--tx3);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.mb.has{border-color:var(--border2)}.mb.has .mb-n{color:var(--tx2)}.mb.has .mb-s{color:var(--tx3)}
+.mb.cur{background:var(--bluel);border-color:var(--blue)}.mb.cur .mb-n{color:var(--bluedk)}.mb.cur .mb-s{color:#3b82f6}
+.mact{display:flex;gap:5px;margin-bottom:10px}
+.mact button{flex:1;padding:6px 3px;border-radius:var(--r);border:.5px solid var(--border);background:transparent;font-size:10px;font-family:inherit;cursor:pointer;color:var(--tx);transition:all .1s}
+.mact button:hover{background:var(--bg)}
+.mact .svb{background:var(--bluel);border-color:var(--blue);color:var(--bluedk)}
+.mhelp{padding:9px 11px;border-radius:var(--r);background:var(--bg);border:.5px solid var(--border)}
+.mstep{display:flex;align-items:flex-start;gap:8px;font-size:9px;color:var(--tx3);line-height:1.6;margin-bottom:3px}
+.mstep:last-child{margin-bottom:0}
+.mstepn{width:16px;height:16px;border-radius:50%;background:var(--bluel);color:var(--bluedk);font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+/* monitor */
+.mon{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mi{display:flex;flex-direction:column;gap:3px}
+.mi-l{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em}
+.mi-bar{height:5px;background:var(--bg);border-radius:3px;position:relative;overflow:hidden;border:.5px solid var(--border)}
+.mi-f{height:100%;border-radius:3px;transition:width .08s,left .08s;position:absolute;top:0}
+.mi-f.b{background:var(--blue)}.mi-f.g{background:var(--green)}.mi-f.a{background:var(--amber)}
+.mi-mark{position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--border2);z-index:1}
+.mi-v{font-size:9px;color:var(--tx3);font-family:inherit}
+.mi.susr{flex-direction:row;align-items:center;gap:6px}
+.susdot{width:10px;height:10px;border-radius:50%;background:var(--bg);border:.5px solid var(--border2);flex-shrink:0;transition:all .12s}
+.susdot.on{background:var(--green);border-color:var(--green);box-shadow:0 0 6px #05996940}
+
+/* instrument view */
+.ihd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex-wrap:wrap;gap:5px}
+.ititle{font-size:12px;font-weight:700;color:var(--tx);font-family:inherit}
+.imeta{display:flex;align-items:center;gap:6px}
+.fsbtn{padding:4px 9px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg2);font-size:10px;font-family:inherit;cursor:pointer;color:var(--tx2)}
+.fsbtn:hover{border-color:var(--border2);background:var(--bg3)}
+
+/* piano — ZERO transition on keys to eliminate visual lag that feels like audio lag */
+.pw{overflow-x:auto;padding-bottom:3px}
+.pno{position:relative;height:110px;display:flex;user-select:none}
+.wk{position:relative;width:34px;height:108px;border:.5px solid var(--border);background:var(--card);border-radius:0 0 5px 5px;cursor:pointer;flex-shrink:0}
+.wk:hover{background:var(--bg2)}.wk.pr{background:#93c5fd;border-color:var(--blue)}
+.kl{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--tx3);pointer-events:none;font-family:inherit;font-weight:700;text-align:center;line-height:1.3}
+.bk{position:absolute;width:22px;height:66px;background:#1e1c18;border-radius:0 0 5px 5px;z-index:2;cursor:pointer}
+.bk:hover{background:#363230}.bk.pr{background:#1d4ed8}
+.phint{margin-top:7px;font-size:9px;color:var(--tx3)}
+
+/* drum pads */
+.dgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:2px 0}
+@media(max-width:480px){.dgrid{grid-template-columns:repeat(3,1fr)}}
+.dp{padding:16px 4px;border-radius:var(--r);border:none;cursor:pointer;text-align:center;color:#fff;font-family:inherit;font-weight:700;transition:filter .05s,transform .06s;user-select:none;touch-action:none}
+.dp-n{display:block;font-size:11px;font-weight:700;letter-spacing:.04em}
+.dp-k{display:block;font-size:9px;opacity:.6;margin-top:4px}
+.dp:active,.dp.hit{filter:brightness(1.4);transform:scale(.93)}
+.dhint{margin-top:8px;font-size:9px;color:var(--tx3)}
+
+/* active notes */
+.ntd{display:flex;flex-wrap:wrap;gap:5px;min-height:26px;align-items:center}
+.nt{display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:var(--r);border:.5px solid var(--border);background:var(--bg)}
+.nt.sus{border-color:var(--amber);background:var(--amberl)}
+.nt-n{font-size:11px;font-weight:700;font-family:inherit}
+.nt.sus .nt-n{color:var(--amberdk)}
+.nt-v{width:24px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.nt-vb{height:100%;background:var(--blue);border-radius:2px}
+.nt.sus .nt-vb{background:var(--amber)}
+.nt-ph{font-size:11px;color:var(--tx3);font-family:inherit}
+
+/* fullscreen */
+.fsmod{display:none;position:fixed;inset:0;background:#141210;z-index:300;flex-direction:column}
+.fsmod.open{display:flex}
+.fstb{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:.5px solid #2a2724;flex-shrink:0}
+.fst{color:#d4d2cc;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-family:inherit}
+.fscl{padding:7px 16px;border-radius:var(--r);border:.5px solid #555;background:transparent;color:#bbb;cursor:pointer;font-size:11px;font-family:inherit}
+.fscl:hover{background:#2a2724;color:#fff}
+.fsbd{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px}
+.pnolg{position:relative;height:200px;display:flex;user-select:none;flex-shrink:0}
+.wklg{position:relative;width:48px;height:198px;border:.5px solid #555;background:#f0ede8;border-radius:0 0 6px 6px;cursor:pointer;flex-shrink:0}
+.wklg:hover{background:#e0ddd8}.wklg.pr{background:#93c5fd;border-color:#3b82f6}
+.kllg{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:10px;color:#999;pointer-events:none;font-family:inherit;font-weight:700;text-align:center;line-height:1.3}
+.bklg{position:absolute;width:30px;height:120px;background:#1a1814;border-radius:0 0 6px 6px;z-index:2;cursor:pointer}
+.bklg:hover{background:#2e2b27}.bklg.pr{background:#1d4ed8}
+.fshint{margin-top:24px;font-size:10px;color:#666;font-family:inherit;text-align:center}
+.dglg{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;max-width:900px;width:100%}
+.dplg{padding:28px 8px;border-radius:10px;border:none;cursor:pointer;text-align:center;color:#fff;font-family:inherit;font-weight:700;transition:filter .05s,transform .07s;user-select:none;touch-action:none}
+.dplg-n{display:block;font-size:14px;font-weight:800;letter-spacing:.06em}
+.dplg-k{display:block;font-size:11px;opacity:.55;margin-top:6px}
+.dplg:active,.dplg.hit{filter:brightness(1.4);transform:scale(.92)}
+
+/* toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(6px);padding:7px 16px;border-radius:var(--r);background:#1c1a17;color:#e8e6e2;font-size:11px;font-family:inherit;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="layout">
+
+<!-- LEFT COLUMN -->
+<div class="col-l">
+
+  <!-- BANK -->
+  <div class="card">
+    <div class="ct">
+      Sound bank — 16 slots
+      <span class="badge" id="loadBadge">—</span>
+      <span style="margin-left:auto;font-size:9px;color:var(--tx3)">Click slot → pick instrument → Assign</span>
+    </div>
+    <div class="bgrid" id="bankGrid"></div>
+    <div class="picker">
+      <div class="pk-info" id="pkInfo">← Click a slot to select it</div>
+      <div class="pk-form" id="pkFormInst" style="display:none">
+        <select class="pksel" id="pkInst" style="max-width:260px"></select>
+        <button class="pk-btn" id="pkAssign" disabled>Assign to slot —</button>
+      </div>
+      <div class="pk-form" id="pkFormDrum" style="display:none">
+        <span style="font-size:10px;color:var(--tx3);white-space:nowrap">Drum kit:</span>
+        <select class="pksel" id="pkKit" style="flex:1"></select>
+        <button class="pk-btn" id="pkKitApply">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTRUMENT VIEW -->
+  <div class="card">
+    <div class="ihd">
+      <span class="ititle" id="ititle">—</span>
+      <div class="imeta">
+        <span class="badge" id="typeBadge">—</span>
+        <span class="badge" id="statBadge">—</span>
+        <button class="fsbtn" id="fsBtnMain">⤢ Fullscreen</button>
+      </div>
+    </div>
+    <div id="pianoView">
+      <div class="pw"><div class="pno" id="pno"></div></div>
+      <div class="phint">A–; → C4 white keys &nbsp;·&nbsp; W E T Y U O P → sharps &nbsp;·&nbsp; Z / X → octave ↓↑</div>
+    </div>
+    <div id="drumView" style="display:none">
+      <div class="dgrid" id="drumGrid"></div>
+      <div class="dhint">Click/touch pads · keyboard shortcuts shown · MIDI Ch 10 always routes here</div>
+    </div>
+  </div>
+
+</div><!-- col-l -->
+
+<!-- RIGHT COLUMN -->
+<div class="col-r">
+
+  <div class="card">
+    <div class="ct">MIDI status</div>
+    <div class="sb">
+      <div class="led" id="mled"></div>
+      <div class="sb-inf">
+        <div class="sb-main" id="smain">Click Activate to start audio</div>
+        <div class="sb-dev"  id="sdev">Chrome / Edge required for Web MIDI</div>
+      </div>
+      <button class="act" id="actBtn">▶ Activate</button>
+    </div>
+    <div class="selrow">
+      <span class="lbl">Ch</span><select class="sc" id="chsel"></select>
+      <span class="lbl" style="margin-left:6px">Slot</span><select class="sc" id="slotSel"></select>
+    </div>
+    <div class="latrow">
+      <span class="latlbl">Audio latency</span>
+      <span class="latval" id="latVal">—</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Metronome</div>
+    <div class="mrow">
+      <div><input class="mbpm" type="number" id="bpmIn" min="20" max="300" value="120"><div class="bpml">BPM</div></div>
+      <button class="tapbtn" id="tapBtn">TAP</button>
+      <button class="mbtn" id="metroBtn">▶ Start</button>
+    </div>
+    <div class="bdots" id="beatDots"></div>
+    <div class="mrow2">
+      <label>Meter</label>
+      <select class="sc" id="timeSig">
+        <option value="2">2/4</option><option value="3">3/4</option>
+        <option value="4" selected>4/4</option><option value="6">6/8</option>
+      </select>
+    </div>
+    <div class="mrow2">
+      <label>Click vol</label>
+      <input type="range" id="metroVol" min="0" max="100" value="75">
+      <span class="vv" id="metroVolV">75%</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Performance</div>
+    <div class="crow"><span class="clbl">Octave</span><div class="nc"><button class="nb" id="octDn">−</button><span class="nv" id="octV">0</span><button class="nb" id="octUp">+</button></div><span style="font-size:9px;color:var(--tx3);margin-left:4px">[Z/X]</span></div>
+    <div class="crow"><span class="clbl">Transpose</span><div class="nc"><button class="nb" id="trDn">−</button><span class="nv" id="trV">0</span><button class="nb" id="trUp">+</button></div><span style="font-size:9px;color:var(--tx3);margin-left:4px">st</span></div>
+    <div class="crow"><span class="clbl">Volume</span><input type="range" id="volSlider" min="0" max="100" value="80"><span class="vv" id="volV">80%</span><button class="mutbtn" id="mutBtn">Mute</button></div>
+    <div class="crow"><span class="clbl">Bend ±</span><div class="nc"><button class="nb" id="bdDn">−</button><span class="nv" id="bdV">2</span><button class="nb" id="bdUp">+</button></div><span style="font-size:9px;color:var(--tx3);margin-left:4px">st</span></div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Memory — 8 slots</div>
+    <div class="mg" id="memGrid"></div>
+    <div class="mact">
+      <button class="svb" id="btnSave">💾 Save</button>
+      <button id="btnLoad">📂 Load</button>
+      <button id="btnClear">✕ Clear</button>
+    </div>
+    <div class="mhelp">
+      <div class="mstep"><div class="mstepn">1</div><div>Click a numbered slot to <b>select</b> it</div></div>
+      <div class="mstep"><div class="mstepn">2</div><div>Set up your patch, octave, volume…</div></div>
+      <div class="mstep"><div class="mstepn">3</div><div><b>Save</b> → write &nbsp;·&nbsp; <b>Load</b> → recall</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">MIDI monitor</div>
+    <div class="mon">
+      <div class="mi"><div class="mi-l">Pitch bend</div><div class="mi-bar"><div class="mi-mark"></div><div class="mi-f b" id="m-pb" style="left:50%;width:0"></div></div><div class="mi-v" id="m-pb-v">0.0 st</div></div>
+      <div class="mi"><div class="mi-l">Mod · CC1</div><div class="mi-bar"><div class="mi-f g" id="m-mod" style="width:0"></div></div><div class="mi-v" id="m-mod-v">0</div></div>
+      <div class="mi susr"><div class="susdot" id="susdot"></div><div><div class="mi-l">Sustain</div><div class="mi-v" id="susval">Off</div></div></div>
+      <div class="mi"><div class="mi-l">Filter · CC74</div><div class="mi-bar"><div class="mi-f b" id="m-fil" style="width:100%"></div></div><div class="mi-v" id="m-fil-v">127</div></div>
+      <div class="mi"><div class="mi-l">Reverb · CC91</div><div class="mi-bar"><div class="mi-f a" id="m-rev" style="width:31%"></div></div><div class="mi-v" id="m-rev-v">40</div></div>
+      <div class="mi"><div class="mi-l">Expr · CC11</div><div class="mi-bar"><div class="mi-f g" id="m-exp" style="width:100%"></div></div><div class="mi-v" id="m-exp-v">127</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Active notes &amp; velocities</div>
+    <div class="ntd" id="notesDisp"><span class="nt-ph">—</span></div>
+  </div>
+
+</div><!-- col-r -->
+</div><!-- layout -->
+</div><!-- app -->
+
+<!-- FULLSCREEN -->
+<div class="fsmod" id="fsModal">
+  <div class="fstb"><span class="fst" id="fsTitle">Fullscreen</span><button class="fscl" id="fsClose">✕ Close</button></div>
+  <div class="fsbd" id="fsBody"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+<script src="https://nbrosowsky.github.io/tonejs-instruments/Tonejs-Instruments.js"
+        onerror="window._SLFailed=true"></script>
+<script>
+(function () {
+'use strict';
+
+// ── UTILS ────────────────────────────────────────────────────────────
+const _N  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const _isSharp   = m => _N[m%12].includes('#');
+const _toName    = m => _N[m%12]+(Math.floor(m/12)-1);
+const _clamp     = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+const _toDb      = v => v===0 ? -Infinity : 20*Math.log10(v/100);
+const _midiNote  = m => Tone.Frequency(_clamp(m,0,127),'midi').toNote();
+
+// ── SAMPLED INSTRUMENT CATALOGUE ─────────────────────────────────────
+const SAMPLED = {
+  'piano':           {n:'Grand Piano',  c:'Keys',    i:'🎹', fHz:5500,fQ:0.5,rev:0.20,cho:0.04,vel:1.2,bend:2},
+  'organ':           {n:'Organ',        c:'Keys',    i:'🎹', fHz:8000,fQ:0.3,rev:0.15,cho:0.30,vel:0.65,bend:2},
+  'harmonium':       {n:'Harmonium',    c:'Keys',    i:'🎹', fHz:5000,fQ:0.5,rev:0.22,cho:0.20,vel:0.80,bend:2},
+  'violin':          {n:'Violin',       c:'Strings', i:'🎻', fHz:6000,fQ:1.0,rev:0.40,cho:0.25,vel:1.0,bend:2},
+  'cello':           {n:'Cello',        c:'Strings', i:'🎻', fHz:3500,fQ:0.8,rev:0.35,cho:0.15,vel:1.0,bend:2},
+  'contrabass':      {n:'Contrabass',   c:'Strings', i:'🎻', fHz:2000,fQ:0.6,rev:0.30,cho:0.10,vel:1.0,bend:2},
+  'flute':           {n:'Flute',        c:'Wind',    i:'🪈', fHz:9000,fQ:0.5,rev:0.35,cho:0.12,vel:0.9,bend:2},
+  'clarinet':        {n:'Clarinet',     c:'Wind',    i:'🪈', fHz:7000,fQ:0.8,rev:0.25,cho:0.10,vel:0.95,bend:2},
+  'bassoon':         {n:'Bassoon',      c:'Wind',    i:'🪈', fHz:2500,fQ:0.7,rev:0.28,cho:0.08,vel:0.90,bend:2},
+  'saxophone':       {n:'Saxophone',    c:'Wind',    i:'🎷', fHz:5000,fQ:1.2,rev:0.22,cho:0.15,vel:1.1,bend:2},
+  'trumpet':         {n:'Trumpet',      c:'Brass',   i:'🎺', fHz:4000,fQ:1.5,rev:0.22,cho:0.08,vel:1.3,bend:2},
+  'french-horn':     {n:'French Horn',  c:'Brass',   i:'🎺', fHz:3500,fQ:1.2,rev:0.28,cho:0.10,vel:1.1,bend:2},
+  'trombone':        {n:'Trombone',     c:'Brass',   i:'🎺', fHz:3000,fQ:1.0,rev:0.25,cho:0.10,vel:1.2,bend:2},
+  'tuba':            {n:'Tuba',         c:'Brass',   i:'🎺', fHz:1500,fQ:0.8,rev:0.20,cho:0.05,vel:1.1,bend:2},
+  'guitar-acoustic': {n:'Acoustic Gtr', c:'Guitar',  i:'🎸', fHz:7000,fQ:0.8,rev:0.28,cho:0.10,vel:1.3,bend:2},
+  'guitar-electric': {n:'Elec Guitar',  c:'Guitar',  i:'🎸', fHz:8000,fQ:1.5,rev:0.20,cho:0.20,vel:1.2,bend:12},
+  'guitar-nylon':    {n:'Nylon Guitar', c:'Guitar',  i:'🎸', fHz:6000,fQ:0.6,rev:0.30,cho:0.08,vel:1.2,bend:2},
+  'harp':            {n:'Harp',         c:'Plucked', i:'🪗', fHz:8000,fQ:0.5,rev:0.45,cho:0.05,vel:1.4,bend:2},
+  'bass-electric':   {n:'Elec Bass',    c:'Bass',    i:'🎸', fHz:900, fQ:2.0,rev:0.06,cho:0.00,vel:1.1,bend:2},
+  'xylophone':       {n:'Xylophone',    c:'Mallet',  i:'🎶', fHz:12000,fQ:0.3,rev:0.50,cho:0.05,vel:1.6,bend:2},
+};
+
+const GENERATED = {
+  'synth-lead': {n:'Synth Lead', c:'Synth', i:'〰', fHz:5000,fQ:2.0,rev:0.15,cho:0.00,vel:1.2,bend:12,poly:8,
+                 opts:{oscillator:{type:'square'},envelope:{attack:0.001,decay:0.05,sustain:0.8,release:0.2}}},
+  'synth-bass': {n:'Synth Bass', c:'Synth', i:'〰', fHz:550, fQ:6.5,rev:0.05,cho:0.00,vel:1.4,bend:2, poly:6,
+                 opts:{oscillator:{type:'sawtooth'},envelope:{attack:0.001,decay:0.18,sustain:0.35,release:0.3}}},
+  'fat-pad':    {n:'Fat Pad',    c:'Synth', i:'〰', fHz:1800,fQ:2.5,rev:0.55,cho:0.45,vel:1.0,bend:4, poly:10,
+                 opts:{oscillator:{type:'fatsawtooth',count:5,spread:55},envelope:{attack:0.6,decay:0.1,sustain:0.8,release:2.2}}},
+  'warm-pad':   {n:'Warm Pad',   c:'Synth', i:'〰', fHz:1200,fQ:1.5,rev:0.70,cho:0.40,vel:0.8,bend:4, poly:10,
+                 opts:{oscillator:{type:'sine'},envelope:{attack:1.2,decay:0.1,sustain:1.0,release:3.0}}},
+};
+
+const DRUM_KITS = {
+  //           kOct  kDecay  snDecay  hhcDecay hhoDecay cDecay  tv    noiseType  kickNote  pitchDecay
+  'kit-acoustic':   {n:'Acoustic Kit',   i:'🥁', kOct:5, kDecay:0.45, snDecay:0.18, hhcDecay:0.035, hhoDecay:0.38, cDecay:1.80, tv:0.82, snNoise:'white', kickNote:'C1', kPitchDecay:0.05},
+  'kit-electronic': {n:'Electronic Kit', i:'🥁', kOct:8, kDecay:0.12, snDecay:0.07, hhcDecay:0.010, hhoDecay:0.12, cDecay:0.60, tv:0.90, snNoise:'white', kickNote:'C1', kPitchDecay:0.02},
+  'kit-brush':      {n:'Brush Kit',      i:'🥁', kOct:3, kDecay:0.60, snDecay:0.35, hhcDecay:0.080, hhoDecay:0.60, cDecay:2.20, tv:0.65, snNoise:'pink',  kickNote:'D1', kPitchDecay:0.10},
+};
+const DRUM_KIT_IDS = Object.keys(DRUM_KITS);
+
+const CATEGORIES = [
+  {label:'Keys',    ids:['piano','organ','harmonium']},
+  {label:'Strings', ids:['violin','cello','contrabass']},
+  {label:'Wind',    ids:['flute','clarinet','bassoon','saxophone']},
+  {label:'Brass',   ids:['trumpet','french-horn','trombone','tuba']},
+  {label:'Guitar',  ids:['guitar-acoustic','guitar-electric','guitar-nylon']},
+  {label:'Plucked', ids:['harp']},
+  {label:'Bass',    ids:['bass-electric']},
+  {label:'Mallet',  ids:['xylophone']},
+  {label:'Synth',   ids:['synth-lead','synth-bass','fat-pad','warm-pad']},
+];
+
+const DRUM_MAP = {35:'kick',36:'kick',37:'rimshot',38:'snare',39:'clap',40:'snare',
+  41:'tom3',42:'hhc',43:'tom3',44:'hhp',45:'tom2',46:'hho',47:'tom2',48:'tom1',
+  49:'crash',50:'tom1',51:'ride',52:'crash',53:'ride',55:'crash',57:'crash',59:'ride'};
+
+const DRUM_PADS = [
+  {midi:36,name:'KICK',  key:'A',color:'#b91c1c'},{midi:38,name:'SNARE',key:'S',color:'#1d4ed8'},
+  {midi:42,name:'HH·C',  key:'D',color:'#a16207'},{midi:46,name:'HH·O', key:'F',color:'#c2410c'},
+  {midi:50,name:'TOM·H', key:'G',color:'#15803d'},{midi:47,name:'TOM·M',key:'H',color:'#0f766e'},
+  {midi:43,name:'TOM·L', key:'J',color:'#0369a1'},{midi:49,name:'CRASH',key:'K',color:'#7e22ce'},
+  {midi:51,name:'RIDE',  key:'L',color:'#be185d'},{midi:39,name:'CLAP', key:';',color:'#4338ca'},
+];
+
+const DRUM_KEY = Object.fromEntries(DRUM_PADS.map(p=>[p.key.toLowerCase(),p.midi]));
+const KEY_MAP  = {'a':60,'w':61,'s':62,'e':63,'d':64,'f':65,'t':66,'g':67,'y':68,'h':69,'u':70,'j':71,'k':72,'o':73,'l':74,'p':75,';':76};
+
+function getDef(id) {
+  if (SAMPLED[id])   return {...SAMPLED[id],   type:'sampled',   id};
+  if (GENERATED[id]) return {...GENERATED[id], type:'generated', id};
+  if (DRUM_KITS[id]) return {...DRUM_KITS[id], type:'drums',     id};
+  return null;
+}
+
+// ── SOUND BANK (16 slots) ────────────────────────────────────────────
+let BANK = [
+  'piano','violin','cello','flute','clarinet','trumpet','french-horn',
+  'guitar-acoustic','harp','bass-electric','xylophone','organ',
+  'synth-lead','synth-bass','fat-pad',
+  'kit-acoustic',
+];
+
+let activeSlot  = -1;
+let playSlot    = 0;
+const DRUM_SLOT = 15;
+
+// ── STATE ────────────────────────────────────────────────────────────
+const S = {
+  octave:0, transpose:0, volume:80, muted:false,
+  bendRange:2, midiCh:0, sustainOn:false,
+  sustainedNotes: new Set(),
+  activeNotes:    new Map(),
+  pbCents:0,
+  ccFilter:127, ccReverb:40, ccChorus:40, ccExpr:127,
+  memSlots: new Array(8).fill(null), curMem:0,
+  ready:false, switching:false,
+  modVal:0,
+};
+
+// ── DEBUG FLAG ──────────────────────────────────────────────────────
+let debugFlag = 1; // Set to 0 to disable debug logging
+window.debugFlag = debugFlag; // Export to window for console access
+
+// ── PERSISTENCE (localStorage) ───────────────────────────────────────
+function _saveState(){
+  const state = {
+    bpm: METRO.bpm,
+    ts: METRO.ts,
+    playSlot: playSlot
+  };
+  localStorage.setItem('midiSynthState', JSON.stringify(state));
+  if(debugFlag) console.log(`%c[PERSIST] Saved: BPM=${state.bpm}, TS=${state.ts}, Slot=${state.playSlot}`, 'color:#0099ff');
+}
+
+function _loadState(){
+  try {
+    const saved = localStorage.getItem('midiSynthState');
+    if(!saved) return;
+    const state = JSON.parse(saved);
+    if(state.bpm) METRO.bpm = _clamp(state.bpm, 20, 300);
+    if(state.ts) METRO.ts = state.ts;
+    if(state.playSlot !== undefined) playSlot = _clamp(state.playSlot, 0, 15);
+    if(debugFlag) console.log(`%c[PERSIST] Loaded: BPM=${METRO.bpm}, TS=${METRO.ts}, Slot=${playSlot}`, 'color:#0099ff');
+  } catch(e) {
+    console.warn('Failed to load persisted state', e);
+  }
+}
+
+const METRO = {run:false, bpm:120, ts:4, vol:75, beat:-1, taps:[]};
+let mAcc=null, mTick=null, mGain=null;
+let mStartTime=0, mBeatDur=0;
+let mCurrentBeat = -1;
+let mNextBeatToSchedule = 0;
+// mVisualUpdateFrameId removed — scheduling now driven by Web Worker
+
+// ── HOT-PATH CACHE: avoid getDef/lookup per keydown ─────────────────
+// Invalidated whenever playSlot changes. Eliminates object creation on every keystroke.
+let _hotDef = null;      // current instrument def (reference, not copy)
+let _hotMap = null;      // current key→midi map
+let _hotIsDrum = false;  // current slot is drums?
+
+function _invalidateHotCache() {
+  const id = BANK[playSlot];
+  _hotDef = getDef(id);
+  _hotIsDrum = _hotDef && _hotDef.type === 'drums';
+  _hotMap = _hotIsDrum ? DRUM_KEY : KEY_MAP;
+}
+
+// ── AUDIO NODES ──────────────────────────────────────────────────────
+let _filter, _vib, _chorus, _reverb, _exprGain, _masterVol;
+let _src   = null;
+let _drum  = null;
+const _cache = new Map();
+
+// ── DRUM ENGINE ──────────────────────────────────────────────────────
+function _buildDrum(kitId) {
+  const k = DRUM_KITS[kitId] || DRUM_KITS['kit-acoustic'];
+  const bus = new Tone.Gain(0.88);
+  bus.connect(_filter);
+  const hpf = new Tone.Filter({frequency:6000, type:'highpass'});
+  hpf.connect(bus);
+
+  const mk = (opt)    => new Tone.MembraneSynth(opt);
+  const mn = (opt)    => new Tone.NoiseSynth(opt);
+  const e  = (d,s=0,r=0.05) => ({attack:0.001,decay:d,sustain:s,release:r});
+
+  // Each kit has distinct synthesis character via kOct, pitchDecay, and snare noise type.
+  // acoustic: warm, medium sweep, white snare
+  // electronic: tight, fast decay, very short pitch sweep
+  // brush: soft, slow decay, pink noise snare for brushed texture
+  const kick  = mk({pitchDecay:k.kPitchDecay, octaves:k.kOct, envelope:e(k.kDecay,0,0.12)});
+  const snare = mn({noise:{type:k.snNoise},    envelope:e(k.snDecay,0,0.05)});
+  const clap  = mn({noise:{type:'white'},      envelope:{attack:0.003,decay:0.12,sustain:0,release:0.05}});
+  const rimsh = mn({noise:{type:'pink'},       envelope:e(0.04,0,0.02)});
+  const hhc   = mn({noise:{type:'white'},      envelope:e(k.hhcDecay,0,0.01)});
+  const hho   = mn({noise:{type:'white'},      envelope:e(k.hhoDecay,0.05,0.10)});
+  const crash = mn({noise:{type:'white'},      envelope:e(k.cDecay,0,0.50)});
+  const ride  = mn({noise:{type:'pink'},       envelope:e(0.50,0,0.15)});
+  // Toms: clearly separated pitches (G3/D3/G2) with tight octave sweeps (2/2.5/3)
+  // so each tom stays in its own frequency zone throughout the decay.
+  const tomH  = mk({pitchDecay:0.025, octaves:2.0, envelope:e(0.18,0,0.05)});
+  const tomM  = mk({pitchDecay:0.035, octaves:2.5, envelope:e(0.24,0,0.07)});
+  const tomL  = mk({pitchDecay:0.055, octaves:3.0, envelope:e(0.34,0,0.10)});
+
+  [kick,snare,clap,rimsh,tomH,tomM,tomL].forEach(n=>n.connect(bus));
+  [hhc,hho,crash,ride].forEach(n=>n.connect(hpf));
+
+  const tv=k.tv;
+
+  // FIX: Pre-warm all drum voices with a silent trigger so the first real hit
+  // doesn't pay the voice-allocation startup cost (eliminates first-note delay).
+  const warmTime = Tone.context.currentTime + 0.05;
+  try {
+    kick.triggerAttackRelease('C1','1n',warmTime,0.001);
+    snare.triggerAttackRelease('64n',warmTime,0.001);
+    hhc.triggerAttackRelease('64n',warmTime,0.001);
+  } catch(e){}
+
+  return {
+    hit(midi,time,vel){
+      const t=time||Tone.now(), v=_clamp(vel,0.01,1);
+      switch(DRUM_MAP[midi]||'snare'){
+        case 'kick':   kick.triggerAttackRelease(k.kickNote,'8n',t,v); break;
+        case 'snare':  snare.triggerAttackRelease('16n',t,v*0.70);   break;
+        case 'clap':   clap.triggerAttackRelease('16n',t,v*0.65);    break;
+        case 'rimshot':rimsh.triggerAttackRelease('32n',t,v*0.50);   break;
+        case 'hhc':    hhc.triggerAttackRelease('32n',t,v*0.55);     break;
+        case 'hhp':    hhc.triggerAttackRelease('64n',t,v*0.35);     break;
+        case 'hho':    hho.triggerAttackRelease('8n',t,v*0.45);      break;
+        case 'crash':  crash.triggerAttackRelease('4n',t,v*0.55);    break;
+        case 'ride':   ride.triggerAttackRelease('8n',t,v*0.38);     break;
+        case 'tom1':   tomH.triggerAttackRelease('G3','8n',t,v*tv);  break;  // high: ~196Hz
+        case 'tom2':   tomM.triggerAttackRelease('D3','8n',t,v*tv);  break;  // mid:  ~147Hz
+        case 'tom3':   tomL.triggerAttackRelease('G2','8n',t,v*tv);  break;  // low:  ~98Hz
+        default:       snare.triggerAttackRelease('32n',t,v*0.35);
+      }
+    },
+    dispose(){
+      [bus,hpf,kick,snare,clap,rimsh,hhc,hho,crash,ride,tomH,tomM,tomL]
+        .forEach(n=>{try{n.disconnect();n.dispose();}catch(e){}});
+    }
+  };
+}
+
+// ── AUDIO INIT ───────────────────────────────────────────────────────
+async function initAudio() {
+  if(S.ready) return;
+
+  // LATENCY FIX 1: Tune the existing Tone.js context — do NOT call Tone.setContext().
+  // Tone.js creates a default Context at module-load time and registers internal nodes
+  // in its own WeakMap keyed to that context. Replacing it with a new Tone.Context
+  // via setContext() causes "A value with the given key could not be found" because
+  // the new context's destination node was never registered in the existing node map.
+  //
+  // Instead: mutate lookAhead and updateInterval on the already-live context,
+  // then call Tone.start() to resume it. This gives us the tight scheduling we want
+  // without blowing up the internal registry.
+  //
+  // lookAhead: 0.005 (5 ms) vs Tone default of 0.1 (100 ms) — biggest single win.
+  // updateInterval: match lookAhead so the internal clock ticks at the same cadence.
+  const toneCtx = Tone.getContext();
+  toneCtx.lookAhead      = 0.005;
+  toneCtx.updateInterval = 0.005;
+
+  await Tone.start();
+
+  // LATENCY FIX 2: Warm up Chrome's audio pipeline with a silent Tone node.
+  // Must use Tone.js wrappers only — mixing raw Web Audio API nodes with Tone's
+  // wrapped graph causes "A value with the given key could not be found" because
+  // Tone's internal WeakMap only tracks nodes it created itself.
+  const _warmOsc = new Tone.Oscillator(440, 'sine').toDestination();
+  _warmOsc.volume.value = -Infinity;
+  _warmOsc.start().stop('+0.001');
+  setTimeout(() => { try { _warmOsc.dispose(); } catch(e){} }, 500);
+
+  _masterVol = new Tone.Volume(_toDb(S.volume)).toDestination();
+  _exprGain  = new Tone.Gain(1).connect(_masterVol);
+  _reverb    = new Tone.Reverb({decay:2.5, wet:0.2});
+  await _reverb.ready;
+  _reverb.connect(_exprGain);
+  _chorus    = new Tone.Chorus(4, 2.5, 0.5);
+  _chorus.wet.value = 0.1;
+  _chorus.connect(_reverb);
+  _chorus.start();
+  _vib       = new Tone.Vibrato({frequency:5.5, depth:0});
+  _vib.connect(_chorus);
+  _filter    = new Tone.Filter({frequency:5000, type:'lowpass', Q:0.5});
+  _filter.connect(_vib);
+
+
+  mGain = new Tone.Gain(METRO.vol/100).connect(_masterVol);
+  mAcc  = new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:0.001,decay:0.048,sustain:0,release:0.01}}).connect(mGain);
+  mTick = new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:0.001,decay:0.032,sustain:0,release:0.01}}).connect(mGain);
+
+  S.ready = true;
+
+  try {
+    const ctx = Tone.context._context || Tone.context;
+    const ms  = Math.round(((ctx.baseLatency||0)+(ctx.outputLatency||0))*1000);
+    const el  = $('latVal'); if(el) el.textContent = ms>0 ? ms+' ms' : '< 5 ms';
+  } catch(e){}
+
+  await activateSlot(playSlot);
+  $('actBtn').textContent = '✓ Active';
+  $('actBtn').className   = 'act on';
+}
+
+// ── INSTRUMENT LOADING ───────────────────────────────────────────────
+function _buildSampledEntry(id) {
+  const lib     = (typeof SampleLibrary !== 'undefined') ? SampleLibrary : null;
+  const noteMap = lib && lib[id] ? lib[id] : undefined;
+
+  const entry = {node:null, loaded:false, type:'sampled'};
+  const node  = new Tone.Sampler({
+    ...(noteMap ? {urls: noteMap} : {}),
+    baseUrl: `https://nbrosowsky.github.io/tonejs-instruments/samples/${id}/`,
+    // LATENCY FIX 3: Add release so Sampler voices decay and free up for reuse.
+    // Without this, voice pool exhausts and new notes queue/stall.
+    release: 0.5,
+    onload:  ()=>{ entry.loaded=true; _warmSampler(node); _refreshBadges(); },
+    onerror: (e)=>{ console.warn('Sample load issue',id,e); _refreshBadges(); },
+  });
+  entry.node = node;
+  return entry;
+}
+
+// LATENCY FIX 4: Pre-warm sampler after load.
+// Tone.Sampler decodes audio lazily — triggering a 0-vel note forces buffer
+// decode so the first real note doesn't pay that cost.
+function _warmSampler(sampler) {
+  try {
+    const warmTime = Tone.context.currentTime + 0.1;
+    sampler.triggerAttackRelease('C4', '32n', warmTime, 0.001);
+    sampler.triggerAttackRelease('C3', '32n', warmTime, 0.001);
+    sampler.triggerAttackRelease('C5', '32n', warmTime, 0.001);
+  } catch(e) {}
+}
+
+function _buildGeneratedEntry(id) {
+  const def   = GENERATED[id];
+  // LATENCY FIX 5: Reduce maxPolyphony to limit voice-search time on attack.
+  // High polyphony = more voices to scan; keep it tight.
+  const poly  = Math.min(def.poly || 8, 8);
+  const synth = new Tone.PolySynth(Tone.Synth, def.opts);
+  synth.maxPolyphony = poly;
+
+  // FIX 6: Pre-allocate voices by triggering silent notes immediately.
+  // PolySynth spawns new Synth instances on first use — this pays the cost upfront.
+  try {
+    const t0 = Tone.context.currentTime + 0.05;
+    const warmNotes = ['C3','E3','G3','C4','E4','G4','C5','E5'].slice(0, poly);
+    warmNotes.forEach(n => synth.triggerAttackRelease(n, '64n', t0, 0.001));
+  } catch(e){}
+
+  return {node:synth, loaded:true, type:'generated'};
+}
+
+async function activateSlot(slotIdx) {
+  if(S.switching) return;
+  S.switching = true;
+  try {
+    const id  = BANK[slotIdx];
+    const def = getDef(id);
+    if(!def) return;
+
+    _releaseAll(true);
+
+    if(_src){ try{_src.disconnect();}catch(e){} _src=null; }
+
+    if(def.type==='drums'){
+      if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
+      _drum = _buildDrum(id);
+      _applyFX({fHz:20000, fQ:0.2, rev:0.10, cho:0});
+    } else {
+      if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
+      let entry = _cache.get(id);
+      if(!entry){
+        entry = def.type==='sampled' ? _buildSampledEntry(id) : _buildGeneratedEntry(id);
+        _cache.set(id, entry);
+      }
+      _src = entry.node;
+      _src.connect(_filter);
+      _applyFX(def);
+      _applyDetune(S.pbCents);
+    }
+
+    playSlot    = slotIdx;
+    S.bendRange = def.bend || 2;
+    $('bdV').textContent = S.bendRange;
+
+    // Invalidate hot cache whenever the active slot changes
+    _invalidateHotCache();
+    _refreshAll();
+    
+    // Persist instrument choice
+    _saveState();
+    if(debugFlag) console.log(`%c[PERSIST] Instrument slot ${slotIdx+1} selected`, 'color:#0099ff');
+  } finally {
+    S.switching = false;
+  }
+}
+
+function _applyFX(def){
+  if(!_filter||!_reverb||!_chorus) return;
+  const fHz = (def.fHz != null && isFinite(def.fHz)) ? def.fHz : 20000;
+  const fQ  = (def.fQ  != null && isFinite(def.fQ))  ? def.fQ  : 0.3;
+  const rev = (def.rev != null && isFinite(def.rev))  ? def.rev : 0.10;
+  const cho = (def.cho != null && isFinite(def.cho))  ? def.cho : 0;
+  const fcc = S.ccFilter / 127;
+  const hz  = _clamp(100 + (fHz - 100) * fcc, 100, 22000);
+  _filter.frequency.value = hz;
+  _filter.Q.value         = fQ;
+  _reverb.wet.value       = _clamp(rev * (S.ccReverb / 127) * 2, 0, 0.95);
+  _chorus.wet.value       = _clamp(cho * (S.ccChorus / 127) * 2, 0, 1.00);
+}
+
+// ── PITCH BEND ───────────────────────────────────────────────────────
+function _applyDetune(cents){
+  S.pbCents = cents;
+  if(!S.ready) return;
+  const def = _hotDef || getDef(BANK[playSlot]);
+  if(!def || def.type==='drums') return;
+  try {
+    if(def.type==='generated'){
+      // PolySynth wraps Synth (Monophonic) voices — .set({detune}) propagates to all.
+      if(_src) _src.set({detune: cents});
+    } else {
+      // Sampler has no .detune API. Instead, set playbackRate on every active
+      // ToneBufferSource inside _activeSources (Map of note → Set/Array of sources).
+      // playbackRate = 2^(cents/1200) — exact pitch shift, zero artifacts.
+      if(!_src) return;
+      const rate = Math.pow(2, cents / 1200);
+      const sources = _src._activeSources;
+      if(sources && sources.size > 0){
+        sources.forEach(arr => {
+          (arr || []).forEach(s => {
+            try{ if(s.playbackRate) s.playbackRate.rampTo(rate, 0.02); }catch(e){}
+          });
+        });
+      }
+    }
+  } catch(e){}
+}
+
+// ── PLAYBACK ─────────────────────────────────────────────────────────
+// LATENCY FIX 7: noteOn hot path is stripped to the minimum.
+// - Removed _velCurve pow() call: linear velocity 0-1 is used directly.
+//   pow() created a softer attack transient that *felt* like latency even
+//   when the audio was already playing (perceptual issue).
+// - Removed per-note filter brightness ramp: it added a rampTo() call +
+//   AudioParam scheduling overhead on every single keypress (~0.3ms CPU).
+//   The effect was subtle; the cost was not.
+// - Tone.now() called ONCE and cached at the top of noteOn.
+// - _hotDef used instead of getDef() (no object spread/creation on hot path).
+
+function noteOn(rawMidi, rawVel){
+  if(!S.ready || S.switching) return;
+  // Use cached def — avoids getDef() spread allocation on every keypress
+  const def = _hotDef;
+  if(!def) return;
+
+  // Cache audio time ONCE — all subsequent calls in this function use same value
+  const now = Tone.now();
+
+  if(def.type==='drums'){
+    if(_drum) _drum.hit(rawMidi, now, rawVel/127);
+    _flashPad(rawMidi);
+    S.activeNotes.set(rawMidi, {noteName:'', vel:rawVel});
+    _renderNotes(); return;
+  }
+  // FIX: Ensure _src exists before triggering
+  if(!_src || !_src.triggerAttack) return;
+
+  S.sustainedNotes.delete(rawMidi);
+  if(S.activeNotes.has(rawMidi)){
+    const ex = S.activeNotes.get(rawMidi);
+    try{ _src.triggerRelease(ex.noteName, now); }catch(e){}
+    S.activeNotes.delete(rawMidi);
+  }
+
+  const shiftedMidi = _clamp(rawMidi + S.octave*12 + S.transpose, 0, 127);
+  const noteName    = _midiNote(shiftedMidi);
+  // FIX: Linear velocity (/ 127) instead of Math.pow curve.
+  // The pow curve softened the attack onset which is perceived as latency.
+  const vel = rawVel / 127;
+
+  try{ _src.triggerAttack(noteName, now, vel); }catch(e){}
+  S.activeNotes.set(rawMidi, {noteName, vel:rawVel});
+  _pianoKey(rawMidi, true);
+  _renderNotes();
+}
+
+function noteOff(rawMidi){
+  const def = _hotDef;
+  if(def && def.type==='drums'){
+    S.activeNotes.delete(rawMidi); _renderNotes(); return;
+  }
+  if(S.sustainOn){
+    if(S.activeNotes.has(rawMidi)) S.sustainedNotes.add(rawMidi);
+    _renderNotes(); return;
+  }
+  _releaseNote(rawMidi);
+}
+
+function _releaseNote(midi){
+  const note = S.activeNotes.get(midi);
+  if(!note || !_src) return;
+  try{ _src.triggerRelease(note.noteName, Tone.now()); }catch(e){}
+  S.activeNotes.delete(midi);
+  S.sustainedNotes.delete(midi);
+  _pianoKey(midi, false);
+  _renderNotes();
+}
+
+function _releaseAll(force=false){
+  if(_src) S.activeNotes.forEach(({noteName})=>{
+    try{ _src.triggerRelease(noteName, Tone.now()); }catch(e){}
+  });
+  S.activeNotes.clear(); S.sustainedNotes.clear();
+  if(force) _setSustain(false);
+  _renderNotes();
+  document.querySelectorAll('.wk.pr,.bk.pr,.wklg.pr,.bklg.pr').forEach(k=>k.classList.remove('pr'));
+}
+
+function _setSustain(on){
+  if(debugFlag) console.log(`%c[SUSTAIN] Changed to ${on} (was ${S.sustainOn})`, 'color:#00ffff');
+  S.sustainOn = on;
+  const dot = $('susdot'); if(dot) dot.className = 'susdot'+(on?' on':'');
+  const v   = $('susval'); if(v) v.textContent = on?'On':'Off';
+  if(!on){ const h=[...S.sustainedNotes]; S.sustainedNotes.clear(); h.forEach(m=>_releaseNote(m)); }
+  _bpmIvCheck();
+}
+
+// ── CC / MIDI ────────────────────────────────────────────────────────
+function _handleCC(n, v){
+  // Make debugFlag accessible and update window reference
+  window.debugFlag = debugFlag;
+  
+  const def = getDef(BANK[playSlot])||{fHz:5000,rev:0.2,cho:0};
+  if(debugFlag) console.log(`%c[CC] n=${n} v=${v} sustain=${S.sustainOn} mod=${S.modVal} ready=${S.ready}`, 'color:#00ff00');
+  
+  switch(n){
+    case 1:  
+      S.modVal=v; 
+      if(debugFlag) console.log(`%c[CC1-MOD] Updated modVal=${v}, calling _bpmIvCheck()`, 'color:#00ff00');
+      _bpmIvCheck(); 
+      if(_vib)_vib.depth.rampTo((v/127)*0.55,0.05); 
+      _mon('m-mod','m-mod-v',v/127*100,v); 
+      break;
+    case 7:
+      // TWO INDEPENDENT TRIGGERS:
+      // 1. Sustain + Modulation (CC1) >= 64: adjusts BPM via pitch bend
+      // 2. Sustain + Volume (CC7) at max (>=64): starts/stops metro directly
+      if(debugFlag) console.log(`%c[CC7-VOL] Volume CC: v=${v}, sustain=${S.sustainOn}, mod=${S.modVal}`, 'color:#ffff00');
+      
+      // VOLUME TRIGGER: Sustain + Volume (independent of modulation)
+      if(S.sustainOn){
+        if(debugFlag) console.log(`%c[CC7-VOL] >>> Sustain is ON, volume=${v}`, 'color:#ff00ff');
+        _bpmIvCheck(); // Auto-activate audio if needed
+        if(debugFlag) console.log(`%c[CC7-VOL] After _bpmIvCheck: ready=${S.ready}`, 'color:#ff00ff');
+        
+        if(v >= 64) { 
+          if(debugFlag) console.log(`%c[CC7-VOL] >>> Vol >= 64: STARTING METRO (ready=${S.ready}, run=${METRO.run})`, 'color:#ff0000');
+          if(S.ready && !METRO.run) {
+            startMetro();
+            if(debugFlag) console.log(`%c[CC7-VOL] >>> Metro started!`, 'color:#ff0000');
+          } else {
+            if(debugFlag) console.log(`%c[CC7-VOL] >>> Metro NOT started: ready=${S.ready}, run=${METRO.run}`, 'color:#ff0000');
+          }
+          _toast('Metro START'); 
+        }
+        else { 
+          if(debugFlag) console.log(`%c[CC7-VOL] >>> Vol < 64: STOPPING METRO`, 'color:#ff0000');
+          if(METRO.run)   stopMetro();
+          _toast('Metro STOP'); 
+        }
+        break;
+      }
+      // Normal volume control (no sustain)
+      S.volume=Math.round(v/127*100); if(!S.muted&&_masterVol)_masterVol.volume.rampTo(_toDb(S.volume),0.02);
+      $('volSlider').value=S.volume; $('volV').textContent=S.volume+'%'; break;
+    case 11: S.ccExpr=v; if(_exprGain&&!S.muted)_exprGain.gain.rampTo(v/127,0.02); _mon('m-exp','m-exp-v',v/127*100,v); break;
+    case 64: _setSustain(v>=64); break;
+    case 71: if(_filter)_filter.Q.rampTo(_clamp(v/127*20,0.1,20),0.05); break;
+    case 74: S.ccFilter=v; if(_filter)_filter.frequency.rampTo(_clamp(100+(def.fHz-100)*(v/127),100,22000),0.06); _mon('m-fil','m-fil-v',v/127*100,v); break;
+    case 91: S.ccReverb=v; if(_reverb)_reverb.wet.rampTo(_clamp((def.rev||0.2)*(v/127)*2,0,0.95),0.10); _mon('m-rev','m-rev-v',v/127*100,v); break;
+    case 93: S.ccChorus=v; if(_chorus)_chorus.wet.rampTo(_clamp((def.cho||0)*(v/127)*2,0,1),0.10); break;
+    case 120:case 123: _releaseAll(true); break;
+  }
+}
+
+// ── PITCH BEND + METRO MIDI CONTROL ─────────────────────────────────
+// State: latest raw 14-bit PB value and interval handle
+let _pbRaw14   = 8192;   // center
+let _bpmIv     = null;   // setInterval handle
+
+// Called every 1000ms while (sustainOn AND modVal>=64 AND wheel off-center)
+function _bpmTick(){
+  const delta = _pbRaw14 - 8192;
+  if(debugFlag) console.log(`%c[BPM-TICK] sustain=${S.sustainOn} ready=${S.ready} delta=${delta} metro.run=${METRO.run}`, 'color:#0080ff');
+  if(!S.sustainOn || !S.ready){
+    if(debugFlag) console.log(`%c[BPM-TICK] >>> Conditions not met (sustain=${S.sustainOn}, ready=${S.ready}), stopping interval`, 'color:#ff0000');
+    clearInterval(_bpmIv); _bpmIv = null; return;
+  }
+  if(Math.abs(delta) < 512) {
+    if(debugFlag) console.log(`%c[BPM-TICK] PB not at extreme (${Math.abs(delta)}<512), skipping`, 'color:#0080ff');
+    return;
+  }
+  const dir  = delta > 0 ? 1 : -1;
+  const step = Math.abs(delta) >= 8191 ? 5 : 1;
+  METRO.bpm  = _clamp(METRO.bpm + dir*step, 20, 300);
+  $('bpmIn').value = METRO.bpm;
+  _saveState(); // Always save BPM changes (both UI and MIDI)
+  if(debugFlag) console.log(`%c[BPM-TICK] >>> Adjusted BPM by ${dir*step} → ${METRO.bpm}`, 'color:#00ffff');
+  _toast('BPM ' + (dir>0?'+':'−') + step + ' → ' + METRO.bpm);
+  // Restart metro only if it's running to sync with new BPM
+  if(METRO.run){ 
+    if(debugFlag) console.log(`%c[BPM-TICK] >>> Metro running - restarting for BPM sync`, 'color:#00ffff');
+    stopMetro(); startMetro(); 
+  }
+}
+
+async function _bpmIvCheck(){
+  const want = S.sustainOn;
+  if(debugFlag) console.log(`%c[BPM-CHECK] want=${want} (sustain=${S.sustainOn}), ready=${S.ready}, interval=${_bpmIv?'ACTIVE':'inactive'}`, 'color:#00ff00');
+  // Auto-activate audio when sustain+mod>=64
+  if(want && !S.ready){ 
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Auto-activating audio...`, 'color:#ff0000');
+    await initAudio(); 
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Audio activated, ready=${S.ready}`, 'color:#ff0000');
+  }
+  if(want  && !_bpmIv) {
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Starting BPM interval (sustain=${S.sustainOn}, ready=${S.ready})`, 'color:#ff0000');
+    // FIX: Reduced from 1000ms to 100ms for faster tempo response
+    _bpmIv = setInterval(_bpmTick, 100);
+  }
+  if(!want &&  _bpmIv){ 
+    if(debugFlag) console.log(`%c[BPM-CHECK] >>> Stopping BPM interval (sustain=${S.sustainOn})`, 'color:#ff0000');
+    clearInterval(_bpmIv); 
+    _bpmIv = null; 
+  }
+}
+
+function _handlePB(lsb, msb){
+  _pbRaw14 = (msb<<7)|lsb;
+  const delta = _pbRaw14 - 8192;
+  if(debugFlag) console.log(`%c[PB] raw14=${_pbRaw14} delta=${delta} (${delta>=8191?'MAX':delta<=-8191?'MIN':'center'}) sustain=${S.sustainOn} ready=${S.ready}`, 'color:#0080ff');
+  
+  // PITCH BEND TRIGGER: Works with Sustain to control metro tempo
+  // When sustain active: PB at extremes changes metro tempo
+  if(S.sustainOn){
+    if(debugFlag) console.log(`%c[PB-TRIGGER] >>> Sustain active, PB=${delta}`, 'color:#ff00ff');
+  }
+  
+  _bpmIvCheck();
+
+  // Normal pitch bend — only when sustain not held as modifier
+  if(!S.sustainOn){
+    const norm = (_pbRaw14-8192)/8192;
+    _applyDetune(norm * S.bendRange * 100);
+    const pct = _clamp(norm*50,-50,50);
+    const fill=$('m-pb');
+    if(fill){ if(norm>=0){fill.style.left='50%';fill.style.width=pct+'%';}
+              else{fill.style.left=(50+pct)+'%';fill.style.width=(-pct)+'%';} }
+    const vEl=$('m-pb-v');
+    if(vEl) vEl.textContent=(Math.round(norm*S.bendRange*10)/10).toFixed(1)+' st';
+  } else {
+    const vEl=$('m-pb-v');
+    if(vEl) vEl.textContent='BPM: '+METRO.bpm;
+  }
+}
+
+
+function _handleMsg(e){
+  const d=e.data; if(!d||d.length<2) return;
+  const st=d[0], d1=d[1], d2=d.length>2?d[2]:0;
+  const cmd=st&0xf0, ch=(st&0x0f)+1;
+  const cmdNames={0x90:'NOTE-ON',0x80:'NOTE-OFF',0xb0:'CC',0xe0:'PB',0xc0:'PROG',0xd0:'AFTERTOUCH'};
+  const cmdName = cmdNames[cmd] || `0x${cmd.toString(16)}`;
+  if(debugFlag) console.log(`%c[MIDI] ch=${ch} cmd=${cmdName} d1=${d1} d2=${d2}`, 'color:#ff00aa');
+  
+  if(ch===10&&S.ready&&cmd===0x90&&d2>0){
+    if(_drum){_drum.hit(d1,Tone.now(),d2/127);_flashPad(d1);} return;
+  }
+  if(S.midiCh!==0&&ch!==S.midiCh) return;
+  switch(cmd){
+    case 0x90: d2>0?noteOn(d1,d2):noteOff(d1); break;
+    case 0x80: noteOff(d1); break;
+    case 0xb0: _handleCC(d1,d2); break;
+    case 0xe0: _handlePB(d1,d2); break;
+    case 0xc0: if(S.ready){ playSlot=d1%16; activateSlot(playSlot); } break;
+    case 0xd0: if(_vib) _vib.depth.rampTo((d1/127)*0.28,0.05); break;
+  }
+}
+
+// ── METRONOME ────────────────────────────────────────────────────────
+// Scheduling uses a Web Worker for the timer tick. Workers run in their own
+// thread and are NEVER throttled by tab visibility or background state —
+// unlike rAF (frozen when hidden) and setTimeout (throttled to ~1s in
+// background tabs by Chrome). The worker just sends a 'tick' message every
+// 50ms; the main thread does all the actual audio scheduling on receipt.
+
+// data: URI worker — avoids blob: CSP restrictions on sandboxed origins.
+let _metroWorker = new Worker(
+  'data:application/javascript,' + encodeURIComponent(
+    'let _iv=null;' +
+    'self.onmessage=function(e){' +
+      'if(e.data==="start"){if(_iv)return;_iv=setInterval(function(){self.postMessage("tick");},50);}' +
+      'else if(e.data==="stop"){clearInterval(_iv);_iv=null;}' +
+    '};'
+  )
+);
+
+_metroWorker.onmessage = function() {
+  // Called every 50ms from the worker thread regardless of tab visibility.
+  // CRITICAL: Check run flag first - worker may have pending ticks after stop
+  if (!METRO.run) return;
+  _scheduleMetronomeBeatsAhead();
+  // Visuals: only update when tab is visible (no point rendering hidden beats).
+  if (!document.hidden) _updateMetronomeVisuals();
+};
+
+function _getMetronomeBeatFromTime(audioTime) {
+  if (!METRO.run) return -1;
+  if (audioTime < mStartTime) return -1;
+  return Math.floor((audioTime - mStartTime) / mBeatDur);
+}
+
+function _metroTick(isAccent, scheduleTime) {
+  if (!mAcc || !mTick) return;
+  const s = isAccent ? mAcc : mTick;
+  const vel = (METRO.vol / 100) * (isAccent ? 0.82 : 0.46);
+  try { s.triggerAttackRelease(isAccent ? 'A6' : 'A5', '32n', scheduleTime, vel); } catch(e){}
+}
+
+function _scheduleMetronomeBeatsAhead() {
+  if (!METRO.run) return;
+  const now = Tone.context.currentTime;
+  const maxTime = now + 0.5;
+  const maxBeat = Math.ceil((maxTime - mStartTime) / mBeatDur);
+  for (let i = mNextBeatToSchedule; i < maxBeat; i++) {
+    const beatTime = mStartTime + (i * mBeatDur);
+    if (beatTime >= now - 0.001) {
+      _metroTick((i % METRO.ts) === 0, beatTime);
+    }
+  }
+  mNextBeatToSchedule = maxBeat;
+}
+
+function _updateMetronomeVisuals() {
+  if (!METRO.run) return;
+  const currentBeat = _getMetronomeBeatFromTime(Tone.context.currentTime);
+  if (currentBeat !== mCurrentBeat && currentBeat >= 0) {
+    mCurrentBeat = currentBeat;
+    METRO.beat = currentBeat % METRO.ts;
+    _renderBeatDots();
+  }
+}
+
+function startMetro() {
+  if(debugFlag) console.log(`%c[METRO-START] Called: ready=${S.ready}, run=${METRO.run}`, 'color:#ffff00');
+  if (!S.ready) { 
+    if(debugFlag) console.log(`%c[METRO-START] >>> FAILED: Audio not ready`, 'color:#ff0000');
+    _toast('Activate audio first'); 
+    return; 
+  }
+  // If already running, restart with new tempo (for BPM changes)
+  if (METRO.run) { 
+    if(debugFlag) console.log(`%c[METRO-START] >>> Already running, restarting for BPM sync`, 'color:#ffff00');
+    stopMetro(); 
+  }
+  mBeatDur = (METRO.ts === 6) ? (60 / METRO.bpm) / 2 : (60 / METRO.bpm);
+  mStartTime = Tone.context.currentTime + 0.1;
+  mNextBeatToSchedule = 0;
+  mCurrentBeat = -1;
+  METRO.beat = -1;
+  METRO.run = true;
+  _metroWorker.postMessage('start');
+  if(debugFlag) console.log(`%c[METRO-START] >>> STARTED! bpm=${METRO.bpm}`, 'color:#00ff00');
+  const b = $('metroBtn');
+  if (b) { b.textContent = '■ Stop'; b.className = 'mbtn run'; }
+}
+
+function stopMetro() {
+  if(debugFlag) console.log(`%c[METRO-STOP] Called: run=${METRO.run}`, 'color:#ffff00');
+  // IMMEDIATELY set run=false to prevent any further scheduling
+  METRO.run = false;
+  METRO.beat = -1;
+  mCurrentBeat = -1;
+  mNextBeatToSchedule = 0;
+  // Send stop to worker
+  _metroWorker.postMessage('stop');
+  _renderBeatDots();
+  if(debugFlag) console.log(`%c[METRO-STOP] >>> STOPPED`, 'color:#00ff00');
+  const b = $('metroBtn');
+  if (b) { b.textContent = '▶ Start'; b.className = 'mbtn'; }
+}
+
+function tapTempo(){
+  const now=Date.now(); METRO.taps.push(now);
+  if(METRO.taps.length>8) METRO.taps.shift();
+  if(METRO.taps.length>1){
+    let s=0; for(let i=1;i<METRO.taps.length;i++) s+=METRO.taps[i]-METRO.taps[i-1];
+    METRO.bpm=_clamp(Math.round(60000/(s/(METRO.taps.length-1))),20,300);
+    $('bpmIn').value=METRO.bpm;
+    if(METRO.run){stopMetro();setTimeout(startMetro,60);}
+  }
+}
+
+// ── MIDI INIT ────────────────────────────────────────────────────────
+function _setStatus(cls,main,dev){
+  const led=$('mled'); if(led)led.className='led '+cls;
+  const sm=$('smain'); if(sm)sm.textContent=main;
+  const sd=$('sdev');  if(sd)sd.textContent=dev||'';
+}
+function initMidi(){
+  if(!navigator.requestMIDIAccess){_setStatus('err','Web MIDI not available — use Chrome or Edge');return;}
+  navigator.requestMIDIAccess({sysex:false}).then(acc=>{
+    const refresh=()=>{
+      const ins=[...acc.inputs.values()];
+      ins.forEach(i=>{i.onmidimessage=_handleMsg;});
+      if(ins.length>0)
+        _setStatus('ok',`MIDI ready · ${ins.length} device${ins.length>1?'s':''} connected`,ins.map(i=>i.name).join(' · '));
+      else
+        _setStatus('warn','Web MIDI available — no devices','Connect a MIDI keyboard; appears automatically');
+    };
+    refresh(); acc.onstatechange=refresh;
+  }).catch(()=>_setStatus('err','MIDI permission denied'));
+}
+
+// ── KEYBOARD ─────────────────────────────────────────────────────────
+// LATENCY FIX 8: Keyboard handler uses pre-cached _hotMap and _hotIsDrum.
+// Previously getDef(BANK[playSlot]) was called on EVERY keydown event —
+// that's an object spread + Map lookup per keypress. Hot cache eliminates it.
+// Also: octave adjust keys (z/x) checked first to short-circuit faster.
+const _pressed = new Set();
+
+window.addEventListener('keydown', e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+
+  // Octave shortcuts — check before anything else
+  const k = e.key;
+  if (debugFlag && (k.toLowerCase() !== 'z' && k.toLowerCase() !== 'x')) console.log(`[KEY-DOWN] key='${k}' ready=${S.ready}`);
+  if (k === 'z' || k === 'Z') { _adjOct(-1); return; }
+  if (k === 'x' || k === 'X') { _adjOct(+1); return; }
+
+  // Use pre-cached map (no getDef call)
+  const midi = _hotMap ? _hotMap[k.toLowerCase()] : undefined;
+  if (midi !== undefined && !_pressed.has(k)) {
+    _pressed.add(k);
+    if (debugFlag) console.log(`[KEY-DOWN] Mapped to MIDI ${midi}, ready=${S.ready}, triggering noteOn`);
+    if (S.ready) noteOn(midi, 100);
+  }
+}, { passive: false });
+
+window.addEventListener('keyup', e => {
+  const midi = _hotMap ? _hotMap[e.key.toLowerCase()] : undefined;
+  if (midi !== undefined) {
+    if (debugFlag) console.log(`[KEY-UP] key='${e.key}' mapped to MIDI ${midi}`);
+    _pressed.delete(e.key);
+    noteOff(midi);
+  }
+}, { passive: false });
+
+function _adjOct(d){
+  S.octave=_clamp(S.octave+d,-4,4);
+  const el=$('octV'); if(el){el.textContent=S.octave;el.className='nv'+(S.octave!==0?' hi':'');}
+}
+
+// ── UI: BANK GRID ────────────────────────────────────────────────────
+function _renderBank(){
+  const grid=$('bankGrid'); if(!grid)return;
+  grid.innerHTML='';
+  BANK.forEach((id,i)=>{
+    const def=getDef(id)||{n:'?',i:'?',c:'?',type:'?'};
+    const isSel=i===activeSlot, isPlay=i===playSlot;
+    const entry=_cache.get(id);
+    const busy=def.type==='sampled'&&entry&&!entry.loaded;
+    const ty=def.type==='sampled'?'sampled':def.type==='generated'?'synth':'drums';
+    let cls='bs'+(isSel?(ty==='drums'?' sel dsel':' sel'):'')+(busy?' busy':'');
+    const el=document.createElement('div');
+    el.className=cls; el.dataset.slot=i;
+    el.innerHTML=`<span class="bs-n">${i+1}${isPlay?'▶':''}</span>
+      <span class="bs-ic">${def.i}</span>
+      <span class="bs-nm">${def.n}</span>
+      <span class="bs-ct">${def.c}</span>
+      <span class="bs-ty ${ty}">${ty}</span>`;
+    grid.appendChild(el);
+  });
+}
+
+document.getElementById('bankGrid').addEventListener('click',e=>{
+  const slotEl=e.target.closest('[data-slot]'); if(!slotEl)return;
+  const i=parseInt(slotEl.dataset.slot);
+  activeSlot=i;
+  _renderBank(); _renderPicker();
+  if(S.ready) activateSlot(i);
+});
+
+// ── UI: PICKER ───────────────────────────────────────────────────────
+function _renderPicker(){
+  const info       = $('pkInfo');
+  const formInst   = $('pkFormInst');
+  const formDrum   = $('pkFormDrum');
+  if(activeSlot<0){
+    if(info) info.innerHTML='← Click a slot to select it';
+    if(formInst) formInst.style.display='none';
+    if(formDrum) formDrum.style.display='none';
+    return;
+  }
+  const id  = BANK[activeSlot];
+  const def = getDef(id)||{n:'?',i:'?',type:'?'};
+  const ty  = def.type==='sampled'?'sampled':def.type==='generated'?'synth':'drums';
+  if(info) info.innerHTML=`Slot <b>${activeSlot+1}</b>: ${def.i} <b>${def.n}</b> <span class="badge ${ty}">${ty}</span>`;
+
+  const isDrum = (activeSlot===DRUM_SLOT);
+  if(formInst) formInst.style.display = isDrum?'none':'flex';
+  if(formDrum) formDrum.style.display = isDrum?'flex':'none';
+
+  if(!isDrum){
+    const sel=$('pkInst'); if(sel) sel.value=id;
+    const btn=$('pkAssign');
+    if(btn){ btn.disabled=false; btn.textContent=`Assign to slot ${activeSlot+1}`; }
+  } else {
+    const kit=$('pkKit'); if(kit) kit.value=id;
+    const sel=$('pkKit'); if(sel) sel.disabled=(DRUM_KIT_IDS.length<=1);
+  }
+}
+
+function _buildPickerDropdowns(){
+  const sel=$('pkInst'); if(!sel)return;
+  sel.innerHTML='';
+  CATEGORIES.forEach(cat=>{
+    const grp=document.createElement('optgroup');
+    grp.label=cat.label;
+    cat.ids.forEach(id=>{
+      const def=getDef(id); if(!def)return;
+      const o=document.createElement('option'); o.value=id; o.textContent=def.n;
+      grp.appendChild(o);
+    });
+    sel.appendChild(grp);
+  });
+
+  const kitSel=$('pkKit'); if(!kitSel)return;
+  kitSel.innerHTML='';
+  DRUM_KIT_IDS.forEach(kid=>{
+    const o=document.createElement('option'); o.value=kid; o.textContent=DRUM_KITS[kid].n;
+    kitSel.appendChild(o);
+  });
+  kitSel.value=BANK[DRUM_SLOT];
+
+  $('pkAssign').addEventListener('click',()=>{
+    if(activeSlot<0||activeSlot===DRUM_SLOT) return;
+    const newId=$('pkInst').value; if(!newId)return;
+    BANK[activeSlot]=newId;
+    _renderBank(); _renderPicker(); _updateSlotSel();
+    if(S.ready) activateSlot(activeSlot);
+    _toast(`Slot ${activeSlot+1} → ${getDef(newId)?.n||newId}`);
+  });
+
+  $('pkKitApply').addEventListener('click',()=>{
+    const kid=$('pkKit').value;
+    BANK[DRUM_SLOT]=kid;
+    _renderBank(); _renderPicker();
+    // Always rebuild the drum engine when kit changes — regardless of playSlot.
+    // Previous code only rebuilt if playSlot===DRUM_SLOT which could be stale.
+    // Also directly dispose+rebuild here so the new kit is guaranteed to load.
+    if(S.ready){
+      if(_drum){ try{_drum.dispose();}catch(e){} _drum=null; }
+      _drum = _buildDrum(kid);
+      _invalidateHotCache();
+    }
+    _toast(`Drum kit → ${DRUM_KITS[kid]?.n||kid}`);
+  });
+}
+
+// ── UI: INSTRUMENT VIEW ──────────────────────────────────────────────
+function _refreshAll(){ _renderBank(); _refreshBadges(); }
+
+function _refreshBadges(){
+  const def=getDef(BANK[playSlot]); if(!def)return;
+  const ty=def.type==='sampled'?'sampled':def.type==='generated'?'synth':'drums';
+  const tb=$('typeBadge');
+  if(tb){tb.textContent=ty;tb.className='badge '+ty;}
+  const sb=$('statBadge');
+  if(sb){
+    const entry=_cache.get(BANK[playSlot]);
+    if(def.type==='sampled'){
+      if(!entry||!entry.loaded){sb.textContent='loading…';sb.className='badge loading';}
+      else{sb.textContent='ready ✓';sb.className='badge ok';}
+    } else {
+      sb.textContent='instant';sb.className='badge ok';
+    }
+  }
+  const isDrums=def.type==='drums';
+  $('pianoView').style.display=isDrums?'none':'block';
+  $('drumView').style.display =isDrums?'block':'none';
+  $('ititle').textContent=def.n||'—';
+}
+
+// ── UI: PIANO BUILDER ────────────────────────────────────────────────
+function _buildPiano(container,start,end,wCl,bCl,wW,bW,bH,lCl){
+  container.innerHTML=''; container.style.position='relative';
+  const whites=[]; for(let m=start;m<=end;m++) if(!_isSharp(m)) whites.push(m);
+  whites.forEach(m=>{
+    const k=document.createElement('div'); k.className=wCl; k.dataset.midi=m;
+    const kb=Object.keys(KEY_MAP).find(k=>KEY_MAP[k]===m);
+    const lbl=document.createElement('div'); lbl.className=lCl;
+    lbl.innerHTML=(kb?`<b>${kb.toUpperCase()}</b><br>`:'')+((_N[m%12]==='C')?`C${Math.floor(m/12)-1}`:'');
+    k.appendChild(lbl);
+    k.addEventListener('pointerdown',ev=>{ev.preventDefault();if(S.ready)noteOn(m,100);});
+    k.addEventListener('pointerup',()=>noteOff(m));
+    k.addEventListener('pointerleave',()=>{if(S.activeNotes.has(m))noteOff(m);});
+    container.appendChild(k);
+  });
+  for(let m=start;m<=end;m++){
+    if(!_isSharp(m)) continue;
+    const wB=whites.filter(w=>w<m).length;
+    const k=document.createElement('div'); k.className=bCl; k.dataset.midi=m;
+    k.style.left=(wB*wW-(bW/2))+'px';
+    k.addEventListener('pointerdown',ev=>{ev.preventDefault();if(S.ready)noteOn(m,100);});
+    k.addEventListener('pointerup',()=>noteOff(m));
+    k.addEventListener('pointerleave',()=>{if(S.activeNotes.has(m))noteOff(m);});
+    container.appendChild(k);
+  }
+}
+
+function _buildDrumGrid(container,padCl,nCl,kCl){
+  container.innerHTML='';
+  DRUM_PADS.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.className=padCl; btn.dataset.midi=p.midi; btn.style.background=p.color;
+    btn.innerHTML=`<span class="${nCl}">${p.name}</span><span class="${kCl}">${p.key}</span>`;
+    btn.addEventListener('pointerdown',ev=>{ev.preventDefault();if(S.ready)noteOn(p.midi,100);});
+    btn.addEventListener('pointerup',()=>noteOff(p.midi));
+    btn.addEventListener('pointerleave',()=>{if(S.activeNotes.has(p.midi))noteOff(p.midi);});
+    container.appendChild(btn);
+  });
+}
+
+function _pianoKey(midi,on){
+  document.querySelectorAll(`[data-midi="${midi}"]`).forEach(el=>{
+    if(el.classList.contains('wk')||el.classList.contains('bk')||
+       el.classList.contains('wklg')||el.classList.contains('bklg'))
+      el.classList.toggle('pr',on);
+  });
+}
+function _flashPad(midi){
+  document.querySelectorAll(`.dp[data-midi="${midi}"],.dplg[data-midi="${midi}"]`).forEach(el=>{
+    el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),90);
+  });
+}
+
+// ── UI: FULLSCREEN ───────────────────────────────────────────────────
+function openFullscreen(){
+  const modal=$('fsModal'), body=$('fsBody'), title=$('fsTitle');
+  const def=getDef(BANK[playSlot]);
+  const isDrums=def&&def.type==='drums';
+  modal.className='fsmod open'; body.innerHTML='';
+  if(isDrums){
+    title.textContent=`${def.n} — fullscreen`;
+    const g=document.createElement('div'); g.className='dglg'; body.appendChild(g);
+    _buildDrumGrid(g,'dplg','dplg-n','dplg-k');
+  } else {
+    title.textContent='Piano — C1–C7 (7 octaves)';
+    const w=document.createElement('div'); w.style.cssText='overflow-x:auto;max-width:100%;';
+    const p=document.createElement('div'); p.className='pnolg'; w.appendChild(p); body.appendChild(w);
+    _buildPiano(p,24,96,'wklg','bklg',48,30,120,'kllg');
+    const h=document.createElement('div'); h.className='fshint';
+    h.textContent='A-L=C4 · W E T Y U O P=sharps · Z/X=octave · Esc=close';
+    body.appendChild(h);
+  }
+  document.addEventListener('keydown',_onFsKey);
+}
+function closeFullscreen(){ $('fsModal').className='fsmod'; document.removeEventListener('keydown',_onFsKey); }
+function _onFsKey(e){ if(e.key==='Escape') closeFullscreen(); }
+
+// ── UI: NOTES & BEAT DOTS ────────────────────────────────────────────
+function _renderNotes(){
+  const d=$('notesDisp'); if(!d)return;
+  if(S.activeNotes.size===0){d.innerHTML='<span class="nt-ph">—</span>';return;}
+  const def=getDef(BANK[playSlot]);
+  const isDrum=def&&def.type==='drums';
+  d.innerHTML=[...S.activeNotes.keys()].sort((a,b)=>a-b).map(m=>{
+    const{vel,noteName}=S.activeNotes.get(m);
+    const sus=S.sustainedNotes.has(m);
+    const label=isDrum?(DRUM_PADS.find(p=>p.midi===m)?.name||'D'+m):noteName||_toName(m);
+    return`<div class="nt${sus?' sus':''}"><span class="nt-n">${label}</span><div class="nt-v"><div class="nt-vb" style="width:${Math.round(vel/127*100)}%"></div></div></div>`;
+  }).join('');
+}
+
+function _renderBeatDots(){
+  const el=$('beatDots'); if(!el)return; el.innerHTML='';
+  for(let i=0;i<METRO.ts;i++){
+    const d=document.createElement('div');
+    d.className='bdot'+(i===METRO.beat?' on':'')+(i===0?' accent':'');
+    el.appendChild(d);
+  }
+}
+
+// ── UI: MEMORY ───────────────────────────────────────────────────────
+function _renderMem(){
+  const g=$('memGrid'); if(!g)return; g.innerHTML='';
+  S.memSlots.forEach((slot,i)=>{
+    const el=document.createElement('div');
+    el.className='mb'+(slot?' has':'')+(i===S.curMem?' cur':'');
+    const name=slot?getDef(BANK[slot.playSlot])?.n||'?':'';
+    el.innerHTML=`<span class="mb-n">${i+1}</span>`+(slot?`<span class="mb-s">${name}</span>`:'');
+    el.addEventListener('click',()=>{S.curMem=i;_renderMem();});
+    g.appendChild(el);
+  });
+}
+function saveSlot(){
+  S.memSlots[S.curMem]={playSlot,octave:S.octave,transpose:S.transpose,
+    volume:S.volume,bendRange:S.bendRange,ccFilter:S.ccFilter,
+    ccReverb:S.ccReverb,ccChorus:S.ccChorus,midiCh:S.midiCh,bank:[...BANK]};
+  _renderMem(); _toast(`Slot ${S.curMem+1} saved`);
+}
+async function loadSlot(){
+  const slot=S.memSlots[S.curMem];
+  if(!slot){_toast('Empty slot — Save something first');return;}
+  BANK.splice(0,16,...slot.bank);
+  Object.assign(S,{octave:slot.octave,transpose:slot.transpose,volume:slot.volume,
+    bendRange:slot.bendRange,ccFilter:slot.ccFilter,ccReverb:slot.ccReverb,
+    ccChorus:slot.ccChorus,midiCh:slot.midiCh});
+  $('octV').textContent=S.octave; $('trV').textContent=S.transpose; $('bdV').textContent=S.bendRange;
+  $('volSlider').value=S.volume; $('volV').textContent=S.volume+'%';
+  $('chsel').value=S.midiCh;
+  if(_masterVol&&!S.muted)_masterVol.volume.value=_toDb(S.volume);
+  playSlot=slot.playSlot;
+  _renderBank(); _renderPicker(); _renderMem(); _updateSlotSel();
+  if(S.ready) await activateSlot(playSlot);
+  _toast(`Slot ${S.curMem+1} loaded`);
+}
+
+// ── UI: MISC ─────────────────────────────────────────────────────────
+function _mon(barId,valId,pct,raw){
+  const b=$(barId); if(b) b.style.width=_clamp(pct,0,100)+'%';
+  const v=$(valId); if(v) v.textContent=Math.round(raw);
+}
+function _bindNum(dnId,upId,valId,key,min,max){
+  const el=$(valId);
+  const upd=d=>{S[key]=_clamp(S[key]+d,min,max); if(el){el.textContent=S[key];el.className='nv'+(S[key]!==0?' hi':'');}};
+  $(dnId).addEventListener('click',()=>upd(-1));
+  $(upId).addEventListener('click',()=>upd(+1));
+}
+let _tT=null;
+function _toast(msg){
+  const t=$('toast'); if(t){t.textContent=msg;t.className='toast show';}
+  clearTimeout(_tT); _tT=setTimeout(()=>{if(t)t.className='toast';},2500);
+}
+function $(id){ return document.getElementById(id); }
+
+function _buildSelects(){
+  const ch=$('chsel'); ch.innerHTML='';
+  const o=document.createElement('option');o.value=0;o.textContent='All';ch.appendChild(o);
+  for(let i=1;i<=16;i++){const op=document.createElement('option');op.value=i;op.textContent=i;ch.appendChild(op);}
+  ch.value=S.midiCh; ch.addEventListener('change',()=>{S.midiCh=parseInt(ch.value);});
+  _updateSlotSel();
+}
+function _updateSlotSel(){
+  const sel=$('slotSel'); if(!sel)return;
+  sel.innerHTML='';
+  BANK.forEach((id,i)=>{
+    const def=getDef(id);
+    const o=document.createElement('option');o.value=i;o.textContent=`${i+1}: ${def?.n||id}`;sel.appendChild(o);
+  });
+  sel.value=playSlot;
+  sel.onchange=()=>{ if(S.ready){ playSlot=parseInt(sel.value); activateSlot(playSlot); } };
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────
+// Load persisted state FIRST
+_loadState();
+
+_buildPiano($('pno'), 48,83,'wk','bk',34,22,66,'kl');
+_buildDrumGrid($('drumGrid'),'dp','dp-n','dp-k');
+_buildPickerDropdowns();
+_buildSelects();
+_renderBank();
+_renderMem();
+_renderBeatDots();
+_renderPicker();
+_refreshBadges();
+// Initialize hot cache for the default slot
+_invalidateHotCache();
+initMidi();
+
+// Sync UI with loaded state
+$('bpmIn').value = METRO.bpm;
+$('timeSig').value = METRO.ts;
+$('slotSel').value = playSlot;
+_renderBeatDots(); // Update beat dots to match loaded meter
+_updateSlotSel();
+if(debugFlag) console.log(`%c[BOOT] UI synced: BPM=${METRO.bpm}, TS=${METRO.ts}, Slot=${playSlot}`, 'color:#0099ff');
+
+_bindNum('octDn','octUp','octV','octave',   -4, 4);
+_bindNum('trDn', 'trUp', 'trV', 'transpose',-12,12);
+_bindNum('bdDn', 'bdUp', 'bdV', 'bendRange',  1,24);
+// FIX: re-apply current pitch bend whenever bend range changes, so the
+// audible pitch shift stays consistent with the wheel position.
+['bdDn','bdUp'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',()=>_applyDetune(S.pbCents));
+});
+
+$('actBtn').addEventListener('click', async()=>{
+  if(S.ready)return;
+  $('actBtn').textContent='⏳ Starting…';
+  await initAudio();
+  _toast('Audio active — loading samples in background…');
+});
+
+$('volSlider').addEventListener('input',function(){
+  S.volume=parseInt(this.value); $('volV').textContent=S.volume+'%';
+  if(!S.muted&&_masterVol)_masterVol.volume.rampTo(_toDb(S.volume),0.02);
+});
+$('mutBtn').addEventListener('click',function(){
+  S.muted=!S.muted; this.textContent=S.muted?'Unmute':'Mute';
+  this.className='mutbtn'+(S.muted?' on':'');
+  if(_masterVol)_masterVol.volume.value=S.muted?-Infinity:_toDb(S.volume);
+});
+$('metroBtn').addEventListener('click',startMetro);
+$('tapBtn').addEventListener('click',tapTempo);
+$('bpmIn').addEventListener('input',function(){
+  METRO.bpm=_clamp(parseInt(this.value)||120,20,300);
+  _saveState(); // Persist BPM
+  if(debugFlag) console.log(`%c[PERSIST] BPM changed to ${METRO.bpm}`, 'color:#0099ff');
+  if(METRO.run){stopMetro();setTimeout(startMetro,60);}
+});
+$('timeSig').addEventListener('change',function(){
+  METRO.ts=parseInt(this.value);
+  _saveState(); // Persist meter
+  if(debugFlag) console.log(`%c[PERSIST] Meter changed to ${METRO.ts}`, 'color:#0099ff');
+  const was=METRO.run;
+  if(was){stopMetro();setTimeout(startMetro,60);}else _renderBeatDots();
+});
+$('metroVol').addEventListener('input',function(){
+  METRO.vol=parseInt(this.value); $('metroVolV').textContent=METRO.vol+'%';
+  if(mGain)mGain.gain.rampTo(METRO.vol/100,0.05);
+});
+$('btnSave').addEventListener('click',saveSlot);
+$('btnLoad').addEventListener('click',loadSlot);
+$('btnClear').addEventListener('click',()=>{S.memSlots[S.curMem]=null;_renderMem();_toast(`Slot ${S.curMem+1} cleared`);});
+$('fsBtnMain').addEventListener('click',openFullscreen);
+$('fsClose').addEventListener('click',closeFullscreen);
+
+_mon('m-fil','m-fil-v',100,127);
+_mon('m-rev','m-rev-v',31,40);
+_mon('m-exp','m-exp-v',100,127);
+
+// ── PAGE LIFECYCLE ───────────────────────────────────────────────────
+function _cleanup() {
+  stopMetro();
+  _releaseAll(false);
+  // Clear BPM interval to ensure it resets on reload
+  if (_bpmIv) { clearInterval(_bpmIv); _bpmIv = null; }
+  if (S.ready) {
+    try {
+      if (_src) { _src.disconnect(); _src.dispose(); _src = null; }
+      if (_drum) { _drum.dispose(); _drum = null; }
+      if (mAcc) { mAcc.dispose(); mAcc = null; }
+      if (mTick) { mTick.dispose(); mTick = null; }
+      if (_chorus) { _chorus.stop(); _chorus.dispose(); _chorus = null; }
+      if (_reverb) { _reverb.dispose(); _reverb = null; }
+      if (_filter) { _filter.dispose(); _filter = null; }
+      if (_vib) { _vib.dispose(); _vib = null; }
+      if (mGain) { mGain.dispose(); mGain = null; }
+      if (_exprGain) { _exprGain.dispose(); _exprGain = null; }
+      if (_masterVol) { _masterVol.dispose(); _masterVol = null; }
+    } catch(e){}
+    _cache.clear();
+  }
+  S.ready = false;
+  S.switching = false;
+  METRO.run = false;
+}
+
+window.addEventListener('beforeunload', _cleanup);
+document.addEventListener('visibilitychange', () => {
+  // Resume AudioContext when tab comes back (browser may have suspended it).
+  // Metronome scheduling continues uninterrupted via the Web Worker.
+  if (!document.hidden) {
+    try { Tone.context.resume(); } catch(e) {}
+    // Flush visuals immediately on return so beat dots catch up.
+    if (METRO.run) _updateMetronomeVisuals();
+  }
+});
+
+// Export for debugging
+window.S = S;
+window.METRO = METRO;
+window._cache = _cache;
+window.initAudio = initAudio;
+window.startMetro = startMetro;
+window.stopMetro = stopMetro;
+window.noteOn = noteOn;
+window.noteOff = noteOff;
+window._releaseAll = _releaseAll;
+window.activateSlot = activateSlot;
+
+// Export debugFlag with getter/setter
+Object.defineProperty(window, 'debugFlag', {
+  get() { return debugFlag; },
+  set(val) { debugFlag = val; console.log(`Debug flag set to ${val}`); }
+});
+
+// Export persistence functions
+window._saveState = _saveState;
+window._loadState = _loadState;
+window._clearState = () => { localStorage.removeItem('midiSynthState'); console.log('Persisted state cleared'); };
+
+})();
+</script>
+</body>
+</html>
