@@ -19,7 +19,7 @@
     <script>
       (function () {
         function isAndroid() {
-          return true;
+          return false;  // removeal or android redirect
           const ua = navigator.userAgent || navigator.vendor || window.opera;
           const detected = /Android/i.test(ua);
           // When running in dev mode (`?dev`), behave like non-Android to
