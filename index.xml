@@ -1,4 +1,32 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SYI Projects on PioterekS</title><link>https://piotereks.top/</link><description>Recent content in SYI Projects on PioterekS</description><generator>Hugo</generator><language>en</language><atom:link href="https://piotereks.top/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>https://piotereks.top/about/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/about/</guid><description>&lt;p&gt;Hi, I’m Piotr Sakowski (PioterekS) — a developer who prefers building practical tools over leaving ideas in notebooks. I split my time between crafting web utilities, integrating data feeds, and maintaining the small projects that power this site.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SYI Projects on PioterekS</title><link>https://piotereks.top/</link><description>Recent content in SYI Projects on PioterekS</description><generator>Hugo</generator><language>en</language><atom:link href="https://piotereks.top/index.xml" rel="self" type="application/rss+xml"/><item><title/><link>https://piotereks.top/olx-otomoto-ban/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/olx-otomoto-ban/</guid><description>&lt;h1 id="olxotomoto-ban-machine-script"&gt;OLX/Otomoto Ban Machine Script&lt;/h1&gt;
+&lt;p&gt;This is a browser userscript that adds blocking and monitoring capabilities for OLX.pl and Otomoto.pl platforms.&lt;/p&gt;
+&lt;h2 id="features"&gt;Features&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Automatically blocks unwanted listings&lt;/li&gt;
+&lt;li&gt;Tracks viewed items&lt;/li&gt;
+&lt;li&gt;Manages rating filters&lt;/li&gt;
+&lt;li&gt;Lightweight implementation via browser injection&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="installation"&gt;Installation&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;Install Tampermonkey extension in your browser&lt;/li&gt;
+&lt;li&gt;Create new script with the following metadata:
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-javascript" data-lang="javascript"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// ==UserScript==
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// @name OLX/Otomoto Ban + Viewed + Rating
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// @match https://www.olx.pl/*
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// @match https://www.otomoto.pl/*
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// @grant none
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// ==/UserScript==
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;(&lt;span style="color:#66d9ef"&gt;function&lt;/span&gt;(){
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;const&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;s&lt;/span&gt; &lt;span style="color:#f92672"&gt;=&lt;/span&gt; document.&lt;span style="color:#a6e22e"&gt;createElement&lt;/span&gt;(&lt;span style="color:#e6db74"&gt;&amp;#34;script&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;s&lt;/span&gt;.&lt;span style="color:#a6e22e"&gt;src&lt;/span&gt; &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;https://piotereks.top/olx-otomoto-ban/ban-machine.js?_=&amp;#34;&lt;/span&gt; &lt;span style="color:#f92672"&gt;+&lt;/span&gt; Date.&lt;span style="color:#a6e22e"&gt;now&lt;/span&gt;();
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; document.&lt;span style="color:#a6e22e"&gt;head&lt;/span&gt;.&lt;span style="color:#a6e22e"&gt;appendChild&lt;/span&gt;(&lt;span style="color:#a6e22e"&gt;s&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;})();
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="github-token-requirements"&gt;GitHub Token Requirements&lt;/h3&gt;
+&lt;p&gt;The script syncs data to GitHub Gist storage. To enable this feature:&lt;/p&gt;</description></item><item><title>About</title><link>https://piotereks.top/about/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/about/</guid><description>&lt;p&gt;Hi, I’m Piotr Sakowski (PioterekS) — a developer who prefers building practical tools over leaving ideas in notebooks. I split my time between crafting web utilities, integrating data feeds, and maintaining the small projects that power this site.&lt;/p&gt;
 &lt;hr&gt;
 &lt;blockquote&gt;
 &lt;p&gt;&lt;strong&gt;✨ Linux Rules the World ✨&lt;/strong&gt;&lt;br&gt;
