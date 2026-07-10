@@ -235,7 +235,7 @@
     // ── URL helpers ───────────────────────────────────────────────────────────
     function extractId(url){
         var clean = url.split('?')[0].split('#')[0];
-        var m = clean.match(/-ID([A-Za-z0-9]+?)(?:\.html)?$/);
+        var m = clean.match(/(?:^|[-_])id([A-Za-z0-9]+?)(?:\.html)?$/i);
         return m ? m[1] : null;
     }
     function getCurrentId(){ return extractId(location.href); }
