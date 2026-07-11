@@ -419,8 +419,13 @@
             commentLabel.textContent = data.comment;
             commentLabel.style.cssText = [
                 "font-size:9px",
+                "font-weight:bold",
                 "color:#fff7b2",
-                "max-width:70px",
+                "background:rgba(255,247,178,0.16)",
+                "border:1px solid rgba(255,247,178,0.45)",
+                "border-radius:999px",
+                "padding:1px 5px",
+                "max-width:80px",
                 "white-space:nowrap",
                 "overflow:hidden",
                 "text-overflow:ellipsis",
@@ -556,7 +561,7 @@
         const ui = document.createElement("div");
         ui.id = "ban-ui";
         ui.style.cssText = [
-            "position:fixed","bottom:20px","right:20px",
+            "position:fixed","bottom:" + (data.banned ? "76px" : "20px") + "","right:20px",
             "z-index:2147483647",
             "background:rgba(0,0,0,0.92)",
             "padding:10px 14px","border-radius:10px",
