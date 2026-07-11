@@ -262,7 +262,10 @@
     }
 
     function normalizeComment(value){
-        return String(value || "").slice(0, 30).trim();
+        return String(value || "")
+            .replace(/\r?\n/g, " ")
+            .replace(/[\t ]+/g, " ")
+            .slice(0, 30);
     }
 
     function updateVisibleComment(dbKey, value){
@@ -394,8 +397,8 @@
 
     function getCard(a, site){
         const selectors = site === "otomoto"
-            ? ['article[data-id]', 'article', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="offer-item"]', '[class*="offer-card"]']
-            : ['[data-cy="l-card"]', 'article[data-id]', 'article', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="ooa-"][class*="card"]', '[class*="offer-item"]'];
+            ? ['article[data-id]', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="offer-item"]', '[class*="offer-card"]']
+            : ['[data-cy="l-card"]', 'article[data-id]', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="ooa-"][class*="card"]', '[class*="offer-item"]'];
 
         for(const sel of selectors){
             const card = a.closest(sel);
@@ -769,20 +772,37 @@
 
     // ── Observer ──────────────────────────────────────────────────────────────
     let observerPaused = false;
+    function isRelevantMutation(mutations){
+        const selectors = [
+            'a[href]',
+            '[data-cy="l-card"]',
+            'article[data-id]',
+            '[data-testid="listing-ad"]',
+            '[data-testid="ad-card"]',
+            '[data-testid*="listing"]',
+            '[data-testid*="AdCard"]',
+            '[class*="ooa-"][class*="card"]',
+            '[class*="offer-item"]',
+            '[class*="offer-card"]',
+        ].join(",");
+
+        return mutations.some(mutation => {
+            const nodes = [...mutation.addedNodes, ...mutation.removedNodes];
+            return nodes.some(node => {
+                if(!node || node.nodeType !== 1) return false;
+                const el = node;
+                if(el.matches?.(selectors)) return true;
+                if(el.querySelector?.(selectors)) return true;
+                return false;
+            });
+        });
+    }
+
     function startObserver(){
         let scheduled = false;
         new MutationObserver(mutations => {
             if(observerPaused) return;
-            const isOurs = mutations.every(m =>
-                [...m.addedNodes, ...m.removedNodes].every(n =>
-                    n.nodeType !== 1 ||
-                    n.id === "olx-script-layer" ||
-                    n.id === "ban-ui" ||
-                    n.id === "ban-bar" ||
-                    n.classList?.contains("script-chip")
-                )
-            );
-            if(isOurs) return;
+            if(!isRelevantMutation(mutations)) return;
             if(scheduled) return;
             scheduled = true;
             requestAnimationFrame(() => { renderList(); scheduled = false; });
