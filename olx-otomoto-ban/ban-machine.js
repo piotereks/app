@@ -356,40 +356,66 @@
     }
 
     // ── Heart selector ────────────────────────────────────────────────────────
-    const HEART_SEL = [
-        '[data-testid="favourites-button"]',
-        '[data-testid="favourite-button"]',
-        '[data-testid="observed-offer"]',
-        '[data-testid*="favourit"]',
-        '[data-testid*="observed"]',
-        '[aria-label*="avoryt"]',
-        '[aria-label*="Obserwuj"]',
-        '[aria-label*="obserwuj"]',
-        'button[class*="FavouriteButton"]',
-        'button[class*="ObservedButton"]',
-        'button[class*="favourite"]',
-        'button[class*="favorite"]',
-        '[data-cy*="favourit"]',
-    ].join(",");
+    const HEART_SEL = {
+        olx: [
+            '[data-testid="favourites-button"]',
+            '[data-testid="favourite-button"]',
+            '[data-testid="observed-offer"]',
+            '[data-testid*="favourit"]',
+            '[data-testid*="observed"]',
+            '[aria-label*="avoryt"]',
+            '[aria-label*="Obserwuj"]',
+            '[aria-label*="obserwuj"]',
+            'button[class*="FavouriteButton"]',
+            'button[class*="ObservedButton"]',
+            'button[class*="favourite"]',
+            'button[class*="favorite"]',
+            '[data-cy*="favourit"]',
+        ].join(","),
+        otomoto: [
+            '[data-testid*="favourite"]',
+            '[data-testid*="observed"]',
+            '[data-testid*="wishlist"]',
+            '[aria-label*="ulub"]',
+            '[aria-label*="obserw"]',
+            '[aria-label*="watch"]',
+            '[data-cy*="favourite"]',
+            '[data-cy*="favorite"]',
+            'button[class*="Favourite"]',
+            'button[class*="Observed"]',
+            'button[class*="favourite"]',
+            'button[class*="favorite"]',
+        ].join(","),
+    };
 
-    function getCard(a){
-        return a.closest('[data-cy="l-card"]')
-            || a.closest('article[data-id]')
-            || a.closest('article')
-            || a.closest('[data-testid="listing-ad"]')
-            || a.closest('[data-testid="ad-card"]')
-            || a.closest('[data-testid*="listing"]')
-            || a.closest('[data-testid*="AdCard"]')
-            || a.closest('[class*="ooa-"][class*="card"]')
-            || a.closest('[class*="offer-item"]')
-            || null;
+    function getHeartSelector(site){
+        return site === "otomoto" ? HEART_SEL.otomoto : HEART_SEL.olx;
     }
 
-    function isListingLink(a){
+    function getCard(a, site){
+        const selectors = site === "otomoto"
+            ? ['article[data-id]', 'article', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="offer-item"]', '[class*="offer-card"]']
+            : ['[data-cy="l-card"]', 'article[data-id]', 'article', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="ooa-"][class*="card"]', '[class*="offer-item"]'];
+
+        for(const sel of selectors){
+            const card = a.closest(sel);
+            if(card) return card;
+        }
+        return null;
+    }
+
+    function isListingLink(a, site){
         const href = (a.getAttribute("href") || "").toLowerCase();
         if(!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) return false;
-        if(extractId(href)) return true;
-        return href.includes("/oferta/") || href.includes("/d/oferta/") || href.includes("/ogloszenie/") || href.includes("/advert/") || href.includes("otomoto") || href.includes("olx");
+
+        const id = extractId(href);
+        const looksOlx = href.includes("/oferta/") || href.includes("/d/oferta/") || href.includes("olx");
+        const looksOtomoto = href.includes("/ogloszenie/") || href.includes("/advert/") || href.includes("otomoto.pl") || href.includes("otomoto");
+
+        if(site === "otomoto"){
+            return !!id ? looksOtomoto || looksOlx : looksOtomoto;
+        }
+        return !!id ? looksOlx || looksOtomoto : looksOlx;
     }
 
     // ── Fade ──────────────────────────────────────────────────────────────────
@@ -531,8 +557,8 @@
         return chip;
     }
 
-    function positionChip(chip, card){
-        const heart    = card.querySelector(HEART_SEL);
+    function positionChip(chip, card, site){
+        const heart    = card.querySelector(getHeartSelector(site));
         const cardRect = card.getBoundingClientRect();
         let top, left;
         if(heart){
@@ -542,7 +568,7 @@
             if(chip.offsetWidth === 0) left = hr.left - 80;
         } else {
             top  = cardRect.top  + 8;
-            left = cardRect.right - 90;
+            left = site === "otomoto" ? cardRect.left + 8 : cardRect.right - 90;
         }
         chip.style.top  = Math.round(top)  + "px";
         chip.style.left = Math.round(left) + "px";
@@ -552,6 +578,7 @@
         const layer  = getLayer();
         const pageId = getCurrentId();
         const db     = getDB();
+        const site   = getSite();
 
         layer.querySelectorAll(".script-chip").forEach(c => c.remove());
 
@@ -560,11 +587,11 @@
         document.querySelectorAll("a[href]").forEach(a => {
             const id = extractId(a.href);
             if(!id || id === pageId) return;
-            if(!isListingLink(a)) return;
+            if(!isListingLink(a, site)) return;
             if(a.closest("header") || a.closest("nav") ||
                a.closest('[role="dialog"]') || a.closest("#notification-hub-dropdown")) return;
 
-            const card = getCard(a);
+            const card = getCard(a, site);
             if(!card || visited.has(card)) return;
             visited.add(card);
 
@@ -576,12 +603,13 @@
             const chip = buildChip(id, data, dbKey);
             chip.setAttribute("data-href", a.href);
             layer.appendChild(chip);
-            requestAnimationFrame(() => positionChip(chip, card));
+            requestAnimationFrame(() => positionChip(chip, card, site));
         });
     }
 
     function repositionAll(){
         const layer = getLayer();
+        const site  = getSite();
         layer.querySelectorAll(".script-chip").forEach(chip => {
             const id   = chip.getAttribute("data-id");
             const href = chip.getAttribute("data-href");
@@ -590,8 +618,8 @@
                 ? document.querySelector('a[href="'+href+'"]') || document.querySelector('a[href*="-ID'+id+'"]')
                 : document.querySelector('a[href*="-ID'+id+'"]');
             if(!a) return;
-            const card = getCard(a);
-            if(card) positionChip(chip, card);
+            const card = getCard(a, site);
+            if(card) positionChip(chip, card, site);
         });
     }
 
