@@ -274,6 +274,15 @@
         writeEntry(key, { id, site:getSite(), comment: normalized });
     }
 
+    function setCommentByKey(id, dbKey, value){
+        const normalized = normalizeComment(value);
+        const db = getDB();
+        const current = (db[dbKey] || {}).comment || "";
+        if(current === normalized) return;
+        const site = dbKey.split(":")[0];
+        writeEntry(dbKey, { id, site, comment: normalized });
+    }
+
     // ── Actions ───────────────────────────────────────────────────────────────
     function updateViewed(){
         const id = getCurrentId();
@@ -414,25 +423,58 @@
         star.addEventListener("click", e=>{ e.preventDefault(); e.stopPropagation(); setRatingByKey(id, dbKey); });
         chip.appendChild(star);
 
-        if(data.comment){
-            const commentLabel = document.createElement("span");
-            commentLabel.textContent = data.comment;
-            commentLabel.style.cssText = [
-                "font-size:9px",
-                "font-weight:bold",
-                "color:#fff7b2",
-                "background:rgba(255,247,178,0.16)",
-                "border:1px solid rgba(255,247,178,0.45)",
-                "border-radius:999px",
-                "padding:1px 5px",
-                "max-width:80px",
-                "white-space:nowrap",
-                "overflow:hidden",
-                "text-overflow:ellipsis",
-                "line-height:1.2",
-            ].join(";");
-            chip.appendChild(commentLabel);
-        }
+        const commentBox = document.createElement("div");
+        commentBox.style.cssText = [
+            "display:flex",
+            "flex-direction:column",
+            "align-items:flex-start",
+            "gap:2px",
+            "max-width:90px",
+        ].join(";");
+
+        const commentLabel = document.createElement("span");
+        commentLabel.textContent = data.comment || "comment";
+        commentLabel.style.cssText = [
+            "font-size:9px",
+            "font-weight:bold",
+            "color:#fff7b2",
+            "background:rgba(255,247,178,0.16)",
+            "border:1px solid rgba(255,247,178,0.45)",
+            "border-radius:999px",
+            "padding:1px 5px",
+            "max-width:80px",
+            "white-space:nowrap",
+            "overflow:hidden",
+            "text-overflow:ellipsis",
+            "line-height:1.2",
+        ].join(";");
+        commentBox.appendChild(commentLabel);
+
+        const commentInput = document.createElement("input");
+        commentInput.type = "text";
+        commentInput.maxLength = 30;
+        commentInput.placeholder = "comment";
+        commentInput.value = data.comment || "";
+        commentInput.title = "Short comment (max 30 chars)";
+        commentInput.style.cssText = [
+            "width:90px",
+            "padding:2px 4px",
+            "border-radius:4px",
+            "border:1px solid rgba(255,255,255,0.25)",
+            "background:rgba(255,255,255,0.12)",
+            "color:white",
+            "font-size:9px",
+            "outline:none",
+            "box-sizing:border-box",
+        ].join(";");
+        commentInput.addEventListener("input", e => {
+            const value = normalizeComment(e.target.value);
+            e.target.value = value;
+            commentLabel.textContent = value || "comment";
+            setCommentByKey(id, dbKey, value);
+        });
+        commentBox.appendChild(commentInput);
+        chip.appendChild(commentBox);
 
         const btn = document.createElement("button");
         btn.textContent = data.banned ? "BANNED" : "BAN";
