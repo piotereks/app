@@ -139,6 +139,7 @@
         });
         if(!res.ok) throw new Error("Gist create failed: " + res.status);
         const data = await res.json();
+        console.log("[OLX/Otomoto script] createGist response:", data);
         GIST_ID = data.id;
         try { localStorage.setItem(GIST_LS_KEY, GIST_ID); } catch(e){}
         // store gist meta inside local DB and push an updated file
@@ -163,7 +164,8 @@
             throw new Error("INVALID_TOKEN");
         }
         if(!res.ok){
-            console.warn("[OLX/Otomoto script] Gist fetch failed:", res.status);
+            const txt = await res.text().catch(()=>"<no body>");
+            console.warn("[OLX/Otomoto script] Gist fetch failed:", res.status, txt);
             return null;
         }
         const data = await res.json();
@@ -195,7 +197,12 @@
             localStorage.removeItem(TOKEN_LS_KEY);
             throw new Error("INVALID_TOKEN");
         }
-        if(!res.ok) console.warn("[OLX/Otomoto script] Gist push failed:", res.status);
+        if(!res.ok){
+            const txt = await res.text().catch(()=>"<no body>");
+            console.warn("[OLX/Otomoto script] Gist push failed:", res.status, txt);
+        } else {
+            try { const j = await res.json().catch(()=>null); console.log("[OLX/Otomoto script] Gist push ok", j && j.id ? j.id : "(no-json)"); } catch(e){}
+        }
     }
 
     // Create a new gist id and replace local and remote references
