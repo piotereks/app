@@ -385,6 +385,13 @@
             || null;
     }
 
+    function isListingLink(a){
+        const href = (a.getAttribute("href") || "").toLowerCase();
+        if(!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) return false;
+        if(extractId(href)) return true;
+        return href.includes("/oferta/") || href.includes("/d/oferta/") || href.includes("/ogloszenie/") || href.includes("/advert/") || href.includes("otomoto") || href.includes("olx");
+    }
+
     // ── Fade ──────────────────────────────────────────────────────────────────
     function applyFade(card, isBanned){
         if(!card) return;
@@ -468,6 +475,10 @@
         const commentInput = document.createElement("input");
         commentInput.className = "comment-input";
         commentInput.type = "text";
+        commentInput.id = "comment-input-" + String(dbKey).replace(/[^a-z0-9]+/gi, "-");
+        commentInput.name = commentInput.id;
+        commentInput.setAttribute("autocomplete", "off");
+        commentInput.setAttribute("aria-label", "Comment");
         commentInput.maxLength = 30;
         commentInput.placeholder = "comment";
         commentInput.value = data.comment || "";
@@ -549,6 +560,7 @@
         document.querySelectorAll("a[href]").forEach(a => {
             const id = extractId(a.href);
             if(!id || id === pageId) return;
+            if(!isListingLink(a)) return;
             if(a.closest("header") || a.closest("nav") ||
                a.closest('[role="dialog"]') || a.closest("#notification-hub-dropdown")) return;
 
@@ -670,6 +682,10 @@
         const commentInput = document.createElement("input");
         commentInput.className = "comment-input";
         commentInput.type = "text";
+        commentInput.id = "comment-input-" + String(id).replace(/[^a-z0-9]+/gi, "-");
+        commentInput.name = commentInput.id;
+        commentInput.setAttribute("autocomplete", "off");
+        commentInput.setAttribute("aria-label", "Comment");
         commentInput.maxLength = 30;
         commentInput.placeholder = "comment";
         commentInput.value = data.comment || "";
