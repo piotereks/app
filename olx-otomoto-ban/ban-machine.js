@@ -33,6 +33,7 @@
     let syncTimer      = null;
     let syncInProgress = false;
     const SYNC_DEBOUNCE_MS = 30000;    // 30 seconds
+    const SYNC_RETRY_MS = 1000;        // retry after 1s if sync busy
 
     // ── Site detection ────────────────────────────────────────────────────────
     function getSite(){
@@ -268,8 +269,13 @@
 
     function scheduleSyncPush(){
         clearTimeout(syncTimer);
-        syncTimer = setTimeout(async () => {
-            if(syncInProgress) return;
+
+        const deferred = async function deferredSync(){
+            if(syncInProgress){
+                // try again shortly
+                syncTimer = setTimeout(deferredSync, SYNC_RETRY_MS);
+                return;
+            }
             syncInProgress = true;
             try {
                 const remoteRes = await fetchGist();
@@ -291,7 +297,9 @@
             } finally {
                 syncInProgress = false;
             }
-        }, SYNC_DEBOUNCE_MS);
+        };
+
+        syncTimer = setTimeout(deferred, SYNC_DEBOUNCE_MS);
     }
 
     // ── URL helpers ───────────────────────────────────────────────────────────
@@ -957,6 +965,9 @@
         startPositionWatch();
         startNavWatch();
     }
+
+    // Expose helper to console for manual gist creation
+    try { window.newGistID = newGistID; } catch(e){}
 
     init();
 
