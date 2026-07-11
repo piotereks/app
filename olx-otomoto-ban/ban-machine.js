@@ -1,14 +1,12 @@
 (function () {
-
     // ── Gist config ───────────────────────────────────────────────────────────
     // Token is read from localStorage key "gist_token".
     // On first run (or after token expiry) a prompt will ask you to provide it.
     const TOKEN_LS_KEY  = "gist_token";
     const GIST_OWNER    = "piotereks";
     const GIST_FILENAME = "olx_otomoto_db.json";
-    const GIST_LS_KEY   = "gist_id";
-    const DEFAULT_GIST_ID = "27718858df6108b468734565eb91df8e";
-    let   GIST_ID       = localStorage.getItem(GIST_LS_KEY) || DEFAULT_GIST_ID;
+    const DEFAULT_GIST_ID = "eb2ae321606877b02d4c75675b8557d4";
+    let   GIST_ID       = DEFAULT_GIST_ID;
 
     // ── Token resolution ──────────────────────────────────────────────────────
     function getToken(){
@@ -141,15 +139,6 @@
         const data = await res.json();
         console.log("[OLX/Otomoto script] createGist response:", data);
         GIST_ID = data.id;
-        try { localStorage.setItem(GIST_LS_KEY, GIST_ID); } catch(e){}
-        // store gist meta inside local DB and push an updated file
-        try {
-            const meta = { __gist_meta: { id: GIST_ID, createdAt: data.created_at, updatedAt: now() } };
-            const local = getDB();
-            const merged = Object.assign({}, local, meta);
-            saveDB(merged);
-            await pushGist(merged);
-        } catch(e){ console.warn("[OLX/Otomoto script] createGist post-update failed:", e); }
         console.log("[OLX/Otomoto script] Created new gist. GIST_ID:", GIST_ID);
         return data;
     }
@@ -205,22 +194,6 @@
         }
     }
 
-    // Create a new gist id and replace local and remote references
-    async function newGistID(){
-        try {
-            const db = getDB();
-            // remove any existing meta to avoid confusion when creating
-            const clean = Object.assign({}, db);
-            delete clean.__gist_meta;
-            const data = await createGist(clean);
-            // createGist already saves meta and pushes updated content
-            return data && data.id ? data.id : null;
-        } catch(e){
-            console.warn("[OLX/Otomoto script] newGistID failed:", e);
-            return null;
-        }
-    }
-
     // ── Handle token errors uniformly ─────────────────────────────────────────
     function handleTokenError(){
         showTokenPrompt(token => {
@@ -236,27 +209,6 @@
             const remoteRes = await fetchGist();
             const local  = getDB();
             let remote = remoteRes && remoteRes.db ? remoteRes.db : null;
-            // if remote contains meta with a different gist id, adopt it
-            try {
-                const metaId = remote && remote.__gist_meta && remote.__gist_meta.id;
-                if(metaId && metaId !== GIST_ID){ GIST_ID = metaId; localStorage.setItem(GIST_LS_KEY, metaId); }
-            } catch(e){}
-
-            // if gist is older than 1 week, create a new one
-            try {
-                const gistCreated = remoteRes && remoteRes.gist && remoteRes.gist.created_at;
-                if(gistCreated){
-                    const created = new Date(gistCreated).getTime();
-                    const ageMs = Date.now() - created;
-                    const WEEK = 7 * 24 * 60 * 60 * 1000;
-                    if(ageMs > WEEK){
-                        await newGistID();
-                        // refresh remote after new gist creation
-                        // proceed with local only
-                        remote = null;
-                    }
-                }
-            } catch(e){}
 
             if(remote){
                 const merged = mergeDBs(local, remote);
@@ -289,10 +241,6 @@
                 const remote = remoteRes && remoteRes.db ? remoteRes.db : null;
                 const local  = getDB();
 
-                try {
-                    const metaId = remote && remote.__gist_meta && remote.__gist_meta.id;
-                    if(metaId && metaId !== GIST_ID){ GIST_ID = metaId; localStorage.setItem(GIST_LS_KEY, metaId); }
-                } catch(e){}
 
                 const merged = remote ? mergeDBs(local, remote) : local;
                 saveDB(merged);
@@ -938,20 +886,9 @@
                 const remoteRes = await fetchGist();
                 const remote = remoteRes && remoteRes.db ? remoteRes.db : null;
                 if(remote){
-                    // adopt gist id from json if present
-                    try { const metaId = remote.__gist_meta && remote.__gist_meta.id; if(metaId && metaId !== GIST_ID){ GIST_ID = metaId; localStorage.setItem(GIST_LS_KEY, metaId); } } catch(e){}
                     const merged = mergeDBs(getDB(), remote);
                     saveDB(merged);
                 }
-                // check age
-                try {
-                    const gistCreated = remoteRes && remoteRes.gist && remoteRes.gist.created_at;
-                    if(gistCreated){
-                        const created = new Date(gistCreated).getTime();
-                        const WEEK = 7 * 24 * 60 * 60 * 1000;
-                        if(Date.now() - created > WEEK) await newGistID();
-                    }
-                } catch(e){}
             } else if(token){
                 await createGist(getDB());
             }
@@ -972,9 +909,6 @@
         startPositionWatch();
         startNavWatch();
     }
-
-    // Expose helper to console for manual gist creation
-    try { window.newGistID = newGistID; } catch(e){}
 
     init();
 
