@@ -265,6 +265,17 @@
         return String(value || "").slice(0, 30).trim();
     }
 
+    function updateVisibleComment(dbKey, value){
+        const comment = value || "";
+        document.querySelectorAll(".script-chip").forEach(chip => {
+            if(chip.getAttribute("data-db-key") !== dbKey) return;
+            const label = chip.querySelector(".comment-label");
+            if(label) label.textContent = comment || "comment";
+            const input = chip.querySelector(".comment-input");
+            if(input && document.activeElement !== input) input.value = comment;
+        });
+    }
+
     function setComment(id, value){
         const normalized = normalizeComment(value);
         const key = makeKey(id);
@@ -272,6 +283,7 @@
         const current = (db[key] || {}).comment || "";
         if(current === normalized) return;
         writeEntry(key, { id, site:getSite(), comment: normalized });
+        updateVisibleComment(key, normalized);
     }
 
     function setCommentByKey(id, dbKey, value){
@@ -281,6 +293,7 @@
         if(current === normalized) return;
         const site = dbKey.split(":")[0];
         writeEntry(dbKey, { id, site, comment: normalized });
+        updateVisibleComment(dbKey, normalized);
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -395,6 +408,7 @@
         const chip = document.createElement("div");
         chip.className = "script-chip";
         chip.setAttribute("data-id", id);
+        chip.setAttribute("data-db-key", dbKey);
         chip.style.cssText = [
             "position:fixed",
             "display:flex",
@@ -433,6 +447,7 @@
         ].join(";");
 
         const commentLabel = document.createElement("span");
+        commentLabel.className = "comment-label";
         commentLabel.textContent = data.comment || "comment";
         commentLabel.style.cssText = [
             "font-size:9px",
@@ -451,6 +466,7 @@
         commentBox.appendChild(commentLabel);
 
         const commentInput = document.createElement("input");
+        commentInput.className = "comment-input";
         commentInput.type = "text";
         commentInput.maxLength = 30;
         commentInput.placeholder = "comment";
@@ -467,6 +483,11 @@
             "outline:none",
             "box-sizing:border-box",
         ].join(";");
+        commentInput.addEventListener("mousedown", e => { e.stopPropagation(); suppressRender = true; });
+        commentInput.addEventListener("pointerdown", e => { e.stopPropagation(); suppressRender = true; });
+        commentInput.addEventListener("focus", () => { suppressRender = true; });
+        commentInput.addEventListener("keydown", () => { suppressRender = true; });
+        commentInput.addEventListener("blur", () => { suppressRender = false; updateVisibleComment(dbKey, commentInput.value); });
         commentInput.addEventListener("input", e => {
             const value = normalizeComment(e.target.value);
             e.target.value = value;
@@ -634,6 +655,7 @@
         ].join(";");
 
         const commentLabel = document.createElement("span");
+        commentLabel.className = "comment-label";
         commentLabel.textContent = data.comment || "comment";
         commentLabel.style.cssText = [
             "font-size:11px",
@@ -646,6 +668,7 @@
         commentBox.appendChild(commentLabel);
 
         const commentInput = document.createElement("input");
+        commentInput.className = "comment-input";
         commentInput.type = "text";
         commentInput.maxLength = 30;
         commentInput.placeholder = "comment";
@@ -662,6 +685,11 @@
             "outline:none",
             "box-sizing:border-box",
         ].join(";");
+        commentInput.addEventListener("mousedown", e => { e.stopPropagation(); suppressRender = true; });
+        commentInput.addEventListener("pointerdown", e => { e.stopPropagation(); suppressRender = true; });
+        commentInput.addEventListener("focus", () => { suppressRender = true; });
+        commentInput.addEventListener("keydown", () => { suppressRender = true; });
+        commentInput.addEventListener("blur", () => { suppressRender = false; updateVisibleComment(makeKey(id), commentInput.value); });
         commentInput.addEventListener("input", e => {
             const value = normalizeComment(e.target.value);
             e.target.value = value;
@@ -687,7 +715,9 @@
     }
 
     // ── Main render ───────────────────────────────────────────────────────────
+    let suppressRender = false;
     function render(){
+        if(suppressRender) return;
         cleanupUI();
         renderList();
         renderPage();
