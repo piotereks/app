@@ -92,6 +92,10 @@
                 entry.ratedAt = rv.ratedAt;
             }
 
+            if(rv.comment !== undefined && ((rv.updatedAt || "") >= (lv.updatedAt || ""))) {
+                entry.comment = rv.comment;
+            }
+
             const lVie = lv.viewedAt || "";
             const rVie = rv.viewedAt || "";
             if(rVie > lVie) entry.viewedAt = rv.viewedAt;
@@ -257,6 +261,19 @@
         scheduleSyncPush();
     }
 
+    function normalizeComment(value){
+        return String(value || "").slice(0, 30).trim();
+    }
+
+    function setComment(id, value){
+        const normalized = normalizeComment(value);
+        const key = makeKey(id);
+        const db = getDB();
+        const current = (db[key] || {}).comment || "";
+        if(current === normalized) return;
+        writeEntry(key, { id, site:getSite(), comment: normalized });
+    }
+
     // ── Actions ───────────────────────────────────────────────────────────────
     function updateViewed(){
         const id = getCurrentId();
@@ -397,6 +414,21 @@
         star.addEventListener("click", e=>{ e.preventDefault(); e.stopPropagation(); setRatingByKey(id, dbKey); });
         chip.appendChild(star);
 
+        if(data.comment){
+            const commentLabel = document.createElement("span");
+            commentLabel.textContent = data.comment;
+            commentLabel.style.cssText = [
+                "font-size:9px",
+                "color:#fff7b2",
+                "max-width:70px",
+                "white-space:nowrap",
+                "overflow:hidden",
+                "text-overflow:ellipsis",
+                "line-height:1.2",
+            ].join(";");
+            chip.appendChild(commentLabel);
+        }
+
         const btn = document.createElement("button");
         btn.textContent = data.banned ? "BANNED" : "BAN";
         btn.style.cssText = [
@@ -503,7 +535,8 @@
             "font-size:14px","font-weight:bold",
         ].join(";");
         const label = document.createElement("span");
-        label.textContent = "\uD83D\uDEAB BANNED | ID: "+id+" | since: "+formatDate(data.bannedAt);
+        const commentText = data.comment ? " | comment: " + data.comment : "";
+        label.textContent = "\uD83D\uDEAB BANNED | ID: "+id+" | since: "+formatDate(data.bannedAt) + commentText;
         const ubtn = document.createElement("button");
         ubtn.textContent = "UNBAN";
         ubtn.style.cssText = "background:white;color:#b00000;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:13px;";
@@ -542,6 +575,54 @@
         star.style.cssText = "font-size:22px;color:"+r.color+";cursor:pointer;user-select:none;";
         star.addEventListener("click", () => setRating(id));
         ui.appendChild(star);
+
+        const commentBox = document.createElement("div");
+        commentBox.style.cssText = [
+            "display:flex",
+            "flex-direction:column",
+            "align-items:flex-start",
+            "gap:2px",
+            "min-width:120px",
+            "max-width:140px",
+        ].join(";");
+
+        const commentLabel = document.createElement("span");
+        commentLabel.textContent = data.comment || "comment";
+        commentLabel.style.cssText = [
+            "font-size:11px",
+            "color:rgba(255,255,255,0.95)",
+            "white-space:nowrap",
+            "overflow:hidden",
+            "text-overflow:ellipsis",
+            "max-width:100%",
+        ].join(";");
+        commentBox.appendChild(commentLabel);
+
+        const commentInput = document.createElement("input");
+        commentInput.type = "text";
+        commentInput.maxLength = 30;
+        commentInput.placeholder = "comment";
+        commentInput.value = data.comment || "";
+        commentInput.title = "Short comment (max 30 chars)";
+        commentInput.style.cssText = [
+            "width:100%",
+            "padding:6px 8px",
+            "border-radius:6px",
+            "border:1px solid rgba(255,255,255,0.2)",
+            "background:rgba(255,255,255,0.12)",
+            "color:white",
+            "font-size:12px",
+            "outline:none",
+            "box-sizing:border-box",
+        ].join(";");
+        commentInput.addEventListener("input", e => {
+            const value = normalizeComment(e.target.value);
+            e.target.value = value;
+            commentLabel.textContent = value || "comment";
+            setComment(id, value);
+        });
+        commentBox.appendChild(commentInput);
+        ui.appendChild(commentBox);
 
         const btn = document.createElement("button");
         btn.textContent = data.banned ? "UNBAN" : "BAN";
