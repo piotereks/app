@@ -397,7 +397,22 @@
 
     function getCard(a, site){
         const selectors = site === "otomoto"
-            ? ['article[data-id]', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="offer-item"]', '[class*="offer-card"]']
+            ? [
+                '[data-testid="listing-ad"]',
+                '[data-testid="ad-card"]',
+                '[data-testid*="listing"]',
+                '[data-testid*="AdCard"]',
+                '[class*="listing"]',
+                '[class*="offer-item"]',
+                '[class*="offer-card"]',
+                '[class*="ad-card"]',
+                '[class*="offer"]',
+                '[class*="card"]',
+                'article[data-id]',
+                'article',
+                'section',
+                'li',
+            ]
             : ['[data-cy="l-card"]', 'article[data-id]', '[data-testid="listing-ad"]', '[data-testid="ad-card"]', '[data-testid*="listing"]', '[data-testid*="AdCard"]', '[class*="ooa-"][class*="card"]', '[class*="offer-item"]'];
 
         for(const sel of selectors){
@@ -413,7 +428,7 @@
 
         const id = extractId(href);
         const looksOlx = href.includes("/oferta/") || href.includes("/d/oferta/") || href.includes("olx");
-        const looksOtomoto = href.includes("/ogloszenie/") || href.includes("/advert/") || href.includes("otomoto.pl") || href.includes("otomoto");
+        const looksOtomoto = href.includes("/oferta/") || href.includes("/ogloszenie/") || href.includes("/advert/") || href.includes("otomoto.pl") || href.includes("otomoto") || href.includes("/osobowe/");
 
         if(site === "otomoto"){
             return !!id ? looksOtomoto || looksOlx : looksOtomoto;
@@ -777,6 +792,9 @@
             'a[href]',
             '[data-cy="l-card"]',
             'article[data-id]',
+            'article',
+            'section',
+            'li',
             '[data-testid="listing-ad"]',
             '[data-testid="ad-card"]',
             '[data-testid*="listing"]',
@@ -784,6 +802,9 @@
             '[class*="ooa-"][class*="card"]',
             '[class*="offer-item"]',
             '[class*="offer-card"]',
+            '[class*="offer"]',
+            '[class*="listing"]',
+            '[class*="card"]',
         ].join(",");
 
         return mutations.some(mutation => {
