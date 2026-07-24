@@ -24,9 +24,27 @@ Chrome / Brave / Edge Download and extract the .zip to a folder Go to chrome://e
 ├── content.js
 ├── options.html
 ├── options.js
+├── shared.js
+├── olx-site.js
+├── otomoto-site.js
 ├── README.md
 └── images/
     ├── icon-16.png
     ├── icon-48.png
     └── icon-128.png
-</code></pre><p>Source files: <a href=../../development/olx-oto-ban-addon/><code>../../development/olx-oto-ban-addon/</code></a></p><h2 id=license>License</h2><p>Same as original userscript (modify as needed for personal use).</p><h2 id=credits>Credits</h2><ul><li><strong>Original userscript:</strong> piotereks (Tampermonkey)</li><li><strong>WebExtension port:</strong> Zero-Google build for Firefox/cross-browser compatibility</li></ul></div><div class=post-footer></div></article></main></body></html>
+</code></pre><p>Source files: <a href=../../development/olx-oto-ban-addon/src/><code>../../development/olx-oto-ban-addon/src/</code></a></p><h2 id=project-structure>Project Structure</h2><pre tabindex=0><code>olx-oto-ban-addon/
+├── src/                 # Extension source (deployable)
+│   ├── manifest.json
+│   ├── background.js
+│   ├── content.js
+│   ├── shared.js
+│   ├── olx-site.js
+│   ├── otomoto-site.js
+│   ├── options.html
+│   ├── options.js
+│   └── images/
+├── tests/               # E2E test suite
+│   ├── playwright.config.js
+│   └── e2e/
+└── *.md                 # Documentation
+</code></pre><h2 id=license>License</h2><p>Same as original userscript (modify as needed for personal use).</p><h2 id=credits>Credits</h2><ul><li><strong>Original userscript:</strong> piotereks (Tampermonkey)</li><li><strong>WebExtension port:</strong> Zero-Google build for Firefox/cross-browser compatibility</li></ul></div><div class=post-footer></div></article></main></body></html>
