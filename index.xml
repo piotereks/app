@@ -58,7 +58,24 @@
 &lt;li&gt;Click the new bookmark to load the dictionary hook.&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h3 id="if-drag-and-drop-is-blocked"&gt;If drag-and-drop is blocked&lt;/h3&gt;
-&lt;p&gt;If your browser prevents dragging the button, create a new bookmark manually and paste the following URL into the bookmark&amp;rsquo;s address/URL field:&lt;/p&gt;</description></item><item><title>Privacy</title><link>https://piotereks.top/privacy/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/privacy/</guid><description>&lt;p&gt;SYI runs as a small, static site powered by Hugo. The goal is to keep tracking light while still understanding if the tools stay online. This page explains what data the site touches and how you can ask questions.&lt;/p&gt;
+&lt;p&gt;If your browser prevents dragging the button, create a new bookmark manually and paste the following URL into the bookmark&amp;rsquo;s address/URL field:&lt;/p&gt;</description></item><item><title>License</title><link>https://piotereks.top/olx-otomoto-ban-addon/license/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/olx-otomoto-ban-addon/license/</guid><description>&lt;h1 id="mozilla-public-license-version-20"&gt;Mozilla Public License Version 2.0&lt;/h1&gt;
+&lt;ol&gt;
+&lt;li&gt;Definitions&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;p&gt;1.1. &amp;ldquo;Contributor&amp;rdquo;
+means each individual or legal entity that creates, contributes to
+the creation of, or owns Covered Software.&lt;/p&gt;
+&lt;p&gt;1.2. &amp;ldquo;Contributor Version&amp;rdquo;
+means the combination of the Contributions of others (if any) used
+by a Contributor and that particular Contributor&amp;rsquo;s Contribution.&lt;/p&gt;
+&lt;p&gt;1.3. &amp;ldquo;Contribution&amp;rdquo;
+means Covered Software of a particular Contributor.&lt;/p&gt;
+&lt;p&gt;1.4. &amp;ldquo;Covered Software&amp;rdquo;
+means Source Code Form to which the initial Contributor has attached
+the notice in Exhibit A, the Executable Form of such Source Code
+Form, and Modifications of such Source Code Form, in each case
+including portions thereof.&lt;/p&gt;</description></item><item><title>Privacy</title><link>https://piotereks.top/privacy/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/privacy/</guid><description>&lt;p&gt;SYI runs as a small, static site powered by Hugo. The goal is to keep tracking light while still understanding if the tools stay online. This page explains what data the site touches and how you can ask questions.&lt;/p&gt;
 &lt;h2 id="cookies-and-ads"&gt;Cookies and Ads&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;Google AdSense scripts may load on selected pages. AdSense can set cookies or similar storage to measure impressions, detect fraud, and personalize or contextualize ads. Visit &lt;a href="https://policies.google.com/technologies/ads"&gt;https://policies.google.com/technologies/ads&lt;/a&gt; to learn how Google uses data and how to manage your ad settings.&lt;/li&gt;
@@ -76,7 +93,7 @@
 &lt;ul&gt;
 &lt;li&gt;The browser extension &lt;strong&gt;OLX/Otomoto Ban + Viewed + Rating&lt;/strong&gt; stores all user data (marked listings, ratings, comments, view history) in your browser&amp;rsquo;s own IndexedDB on your device. Nothing is sent anywhere by default.&lt;/li&gt;
 &lt;li&gt;The only network feature is optional, user-initiated &lt;strong&gt;GitHub Gist sync&lt;/strong&gt;: you provide your own GitHub token, and data is written to a Gist owned by &lt;em&gt;your&lt;/em&gt; GitHub account. The developer has no access to your Gist or token.&lt;/li&gt;
-&lt;li&gt;The add-on&amp;rsquo;s manifest declares &lt;code&gt;data_collection_permissions.required: &amp;quot;none&amp;quot;&lt;/code&gt;. Full details: &lt;a href="https://piotereks.top/olx-oto-ban/PRIVACY.md"&gt;add-on privacy policy&lt;/a&gt; and source repo &lt;code&gt;development/olx-oto-ban-addon/docs/PRIVACY.md&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The add-on&amp;rsquo;s manifest declares &lt;code&gt;data_collection_permissions.required: &amp;quot;none&amp;quot;&lt;/code&gt;. Full details: &lt;a href="https://piotereks.top/olx-otomoto-ban-addon/privacy/"&gt;add-on privacy policy&lt;/a&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id="logs-and-diagnostics"&gt;Logs and Diagnostics&lt;/h2&gt;
 &lt;ul&gt;
@@ -94,7 +111,18 @@
 &lt;li&gt;Email privacy questions or removal requests to &lt;a href="mailto:piotereks@duck.com"&gt;piotereks@duck.com&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;I aim to respond to inquiries within 5 business days.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;I may update this page when I add new integrations or analytics.&lt;/p&gt;</description></item><item><title>Terms and Conditions</title><link>https://piotereks.top/terms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/terms/</guid><description>&lt;p&gt;&lt;strong&gt;Effective Date:&lt;/strong&gt; 2026-02-08&lt;/p&gt;
+&lt;p&gt;I may update this page when I add new integrations or analytics.&lt;/p&gt;</description></item><item><title>Privacy Policy</title><link>https://piotereks.top/olx-otomoto-ban-addon/privacy/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/olx-otomoto-ban-addon/privacy/</guid><description>&lt;p&gt;&lt;em&gt;Last updated: 2026-08-01&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;This extension (&amp;ldquo;the add-on&amp;rdquo;) is designed to be privacy-first. This page explains what data it stores, where it lives, and when anything leaves your browser.&lt;/p&gt;
+&lt;h2 id="data-stored-locally"&gt;Data stored locally&lt;/h2&gt;
+&lt;p&gt;The add-on stores the following data in your browser&amp;rsquo;s &lt;strong&gt;IndexedDB&lt;/strong&gt; (database &lt;code&gt;olx-ban-db&lt;/code&gt;), on your own device:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Listings you have marked (banned/unbanned) — listing IDs and the site name&lt;/li&gt;
+&lt;li&gt;Your 1-3 star ratings for sellers&lt;/li&gt;
+&lt;li&gt;Your private comments on listings (max 50 characters)&lt;/li&gt;
+&lt;li&gt;Viewed-item history (listing IDs and timestamps)&lt;/li&gt;
+&lt;li&gt;Configuration: banned-ad style, collapse delay, housekeeping days&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;None of this data is sent to the developer, to Mozilla, or to any third party by default.&lt;/strong&gt; The add-on makes no network requests unless you enable sync.&lt;/p&gt;</description></item><item><title>Terms and Conditions</title><link>https://piotereks.top/terms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://piotereks.top/terms/</guid><description>&lt;p&gt;&lt;strong&gt;Effective Date:&lt;/strong&gt; 2026-02-08&lt;/p&gt;
 &lt;h2 id="1-introduction"&gt;1. Introduction&lt;/h2&gt;
 &lt;p&gt;Welcome to SYI (Simple Yet Important utilities). By accessing or using this website and its tools (including Free Parking, Esp-Dict, and VCF Generator), you agree to be bound by these Terms and Conditions.&lt;/p&gt;
 &lt;h2 id="2-disclaimer-of-warranties"&gt;2. Disclaimer of Warranties&lt;/h2&gt;
