@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		savePref('waSpectrumRecFormat', recFormat.value);
 	});
 	const monitorBtn = document.getElementById('toggleMonitor');
+	const shotBtn = document.getElementById('shotBtn');
 	const inputDeviceSelect = document.getElementById('inputDevice');
 	const outputDeviceSelect = document.getElementById('outputDevice');
 	const spectrogramColorsBtn = document.getElementById('toggleSpectrogramColors');
@@ -75,6 +76,31 @@ document.addEventListener('DOMContentLoaded', function () {
 			btn.title = isFullscreen ? 'Minimize' : 'Maximize';
 			btn.setAttribute('aria-label', isFullscreen ? 'Minimize' : 'Maximize');
 		});
+	});
+
+	// Fullscreen per-chart tools: landscape orientation + screenshot, persisted per chart
+	document.querySelectorAll('.canvas-container').forEach(function (container) {
+		const key = container.dataset.fsKey || 'chart';
+		const landscapeBtn = container.querySelector('.fs-landscape-btn');
+		const fsShotBtn = container.querySelector('.fs-shot-btn');
+		if (loadTogglePref('waSpectrumFsLandscape' + key)) {
+			container.classList.add('fs-landscape');
+			landscapeBtn.classList.add('active');
+			landscapeBtn.title = 'Portrait';
+		}
+		landscapeBtn.addEventListener('click', function () {
+			const on = container.classList.toggle('fs-landscape');
+			landscapeBtn.classList.toggle('active', on);
+			landscapeBtn.title = on ? 'Portrait' : 'Landscape';
+			savePref('waSpectrumFsLandscape' + key, on ? '1' : '0');
+			handleResize();
+		});
+		fsShotBtn.addEventListener('click', function () {
+			captureChart(container, 'chart-' + key);
+		});
+	});
+	shotBtn.addEventListener('click', function () {
+		captureElement(document.querySelector('.main-container'), 'screenshot');
 	});
 
 	// Coalesce resize bursts to one pass per animation frame so charts track the
@@ -148,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	const MONITOR_GAIN = 0.7; // Monitor passthrough gain
 	const REC_CHUNK_SIZE = 4096; // ScriptProcessor chunk size (samples)
 	const DISPLAY_BINS = 1024; // Display resolution (buckets per chart). Lower = lighter CPU load; tune this
+	const PEAK_MIN_LEVEL = 10; // Ignore the dominant-frequency marker below this amplitude (0..255)
 	const RING_SIZE = 65536; // Ring-buffer size (samples) for the HR FFT path
 	const HIGH_RES_MAX = 1000; // Windows at/below this get ring-buffer FFT beyond analyser fftSize cap
 	const MAX_HR_FFT_SIZE = 32768; // Cap for the high-res ring-buffer FFT size (points). Lower = lighter CPU load; tune this
@@ -904,18 +931,93 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (blob) downloadBlob(blob, ext);
 	}
 
+	function fileStamp() {
+		const d = new Date();
+		const pad = function (n) { return String(n).padStart(2, '0'); };
+		return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+	}
+
 	function downloadBlob(blob, ext) {
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		const d = new Date();
-		const pad = function (n) { return String(n).padStart(2, '0'); };
-		const stamp = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
-		a.download = 'recording-' + stamp + '.' + ext;
+		a.download = 'recording-' + fileStamp() + '.' + ext;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
 		setTimeout(function () { URL.revokeObjectURL(url); }, URL_REVOKE_MS);
+	}
+
+	function canvasOnly(el) {
+		const c = el.querySelector('canvas');
+		const out = document.createElement('canvas');
+		out.width = c.width;
+		out.height = c.height;
+		const octx = out.getContext('2d');
+		octx.fillStyle = '#000';
+		octx.fillRect(0, 0, out.width, out.height);
+		octx.drawImage(c, 0, 0);
+		return out;
+	}
+
+	function downloadCanvas(canvas, baseName) {
+		const a = document.createElement('a');
+		a.href = canvas.toDataURL('image/png');
+		a.download = baseName + '-' + fileStamp() + '.png';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	}
+
+	function captureElement(el, baseName) {
+		const download = function (canvas) {
+			downloadCanvas(canvas, baseName);
+		};
+		if (window.html2canvas) {
+			html2canvas(el, { backgroundColor: '#f8f9fa', scale: Math.min(2, window.devicePixelRatio || 1) }).then(download).catch(function (err) {
+				console.error('html2canvas capture failed, falling back to canvas-only:', err);
+				download(canvasOnly(el));
+			});
+		} else {
+			download(canvasOnly(el));
+		}
+	}
+
+	function captureChart(container, baseName) {
+		// Manual composite: html2canvas renders the canvas at its attribute size,
+		// ignoring the fullscreen layout and the .fs-landscape rotation, so charts
+		// are composited here instead (same CW rotation as the CSS transform)
+		const c = container.querySelector('canvas');
+		const isLandscape = container.classList.contains('fs-landscape') && document.fullscreenElement === container;
+		const A = c.width;
+		const B = c.height;
+		const out = document.createElement('canvas');
+		out.width = isLandscape ? B : A;
+		out.height = isLandscape ? A : B;
+		const octx = out.getContext('2d');
+		octx.fillStyle = '#000';
+		octx.fillRect(0, 0, out.width, out.height);
+		if (isLandscape) {
+			octx.translate(out.width / 2, out.height / 2);
+			octx.rotate(Math.PI / 2);
+			octx.drawImage(c, -A / 2, -B / 2);
+		} else {
+			octx.drawImage(c, 0, 0);
+		}
+		// Label overlay (the DOM label is hidden by CSS in landscape, so only draw when upright)
+		const label = container.querySelector('.canvas-label');
+		if (!isLandscape && label && label.textContent) {
+			octx.setTransform(1, 0, 0, 1, 0, 0);
+			octx.font = '600 12px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+			octx.textAlign = 'left';
+			octx.textBaseline = 'top';
+			const tw = octx.measureText(label.textContent).width;
+			octx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+			octx.fillRect(8, 8, tw + 12, 20);
+			octx.fillStyle = '#ddd';
+			octx.fillText(label.textContent, 14, 13);
+		}
+		downloadCanvas(out, baseName);
 	}
 
 	function encodeWav(samples, sampleRate) {
@@ -1018,6 +1120,14 @@ document.addEventListener('DOMContentLoaded', function () {
 			return (k >= 10 ? Math.round(k) : Math.round(k * 10) / 10) + 'k';
 		}
 		return String(Math.round(f));
+	}
+
+	function formatPeakHz(f) {
+		if (f >= 1000) {
+			const s = (f / 1000).toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
+			return s + ' kHz';
+		}
+		return Math.round(f) + ' Hz';
 	}
 
 	function chooseLinearStep(nyquist, width) {
@@ -1294,6 +1404,37 @@ function drawYAxis(context, width, height, type, phase = 'both', options = {}) {
 		}
 		// Draw ticks and labels on top
 		drawFrequencyAxis(ctx, WIDTH, HEIGHT, audioContext.sampleRate, dispBins, getAxisMode(), 'labels', maxFreq, dispBins);
+		// Dominant-frequency marker: red bar at the current max freq + formatted label
+		let peakIdx = -1;
+		let peakVal = 0;
+		for (let i = 0; i < dispBins; i++) {
+			if (values[i] > peakVal) { peakVal = values[i]; peakIdx = i; }
+		}
+		if (peakIdx >= 0 && peakVal >= PEAK_MIN_LEVEL) {
+			const v0 = peakIdx > 0 ? values[peakIdx - 1] : peakVal;
+			const v2 = peakIdx < dispBins - 1 ? values[peakIdx + 1] : peakVal;
+			const denom = v0 - 2 * peakVal + v2;
+			let delta = denom !== 0 ? 0.5 * (v0 - v2) / denom : 0;
+			if (delta > 0.5) delta = 0.5; else if (delta < -0.5) delta = -0.5;
+			const peakFreq = Math.max(0, (peakIdx + delta) * maxFreq / dispBins);
+			const px = Math.round(frequencyToX(peakFreq, WIDTH, audioContext.sampleRate, getAxisMode(), maxFreq, dispBins)) + 0.5;
+			ctx.strokeStyle = 'rgb(0, 255, 0)';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(px, 0);
+			ctx.lineTo(px, HEIGHT);
+			ctx.stroke();
+			const label = formatPeakHz(peakFreq);
+			ctx.font = '10px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'top';
+			const textWidth = ctx.measureText(label).width;
+			const boxX = Math.max(2, Math.min(px - textWidth / 2 - 3, WIDTH - textWidth - 8));
+			ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+			ctx.fillRect(boxX, 3, textWidth + 6, 13);
+			ctx.fillStyle = 'rgb(0, 255, 0)';
+			ctx.fillText(label, boxX + textWidth / 2 + 3, 5);
+		}
 		drawSpectrogram(liveData, pushFrame);
     }
     

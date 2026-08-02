@@ -51,7 +51,7 @@
 ### Accessibility
 - [ ] Add ARIA labels to all interactive elements
 - [ ] Implement keyboard navigation (spacebar for start/stop, arrow keys for settings)
-- [ ] Add alternative data representation (numerical peak frequencies)
+- [x] Add alternative data representation (numerical peak frequencies)
 - [ ] Include screen reader announcements for state changes
 
 ### Code Quality
@@ -96,7 +96,7 @@ The singlepage.html contains a valuable oscilloscope visualization that's missin
 - [ ] Custom frequency range zoom
 - [ ] Color theme picker
 - [ ] Layout customization (vertical/horizontal arrangements)
-- [ ] Export visualizations as images
+- [x] Export visualizations as images
 
 ### Technical Enhancements
 - [ ] WebGL rendering for better performance
