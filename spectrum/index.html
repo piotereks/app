@@ -160,6 +160,97 @@
             vertical-align: middle;
         }
 
+        .freq-input {
+            width: 5rem;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        .freq-input::-webkit-outer-spin-button,
+        .freq-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .band-meter {
+            display: none;
+            position: absolute;
+            top: 50%;
+            right: 0.5rem;
+            transform: translateY(-50%);
+            z-index: 5;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.35rem;
+            padding: 0.45rem 0.6rem;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .band-meter.show {
+            display: flex;
+        }
+
+        .band-meter-label {
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .band-meter-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .band-meter-track {
+            position: relative;
+            width: 9rem;
+            height: 0.9rem;
+            border-radius: 5px;
+            background: #2a2a2a;
+            overflow: hidden;
+        }
+
+        .band-meter-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 0%;
+            background: linear-gradient(90deg, #2ecc71, #f1c40f 60%, #e74c3c);
+        }
+
+        .band-meter-peak {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0%;
+            width: 3px;
+            background: #fff;
+            opacity: 0.9;
+        }
+
+        .band-meter-db {
+            min-width: 4rem;
+            text-align: right;
+            color: #ddd;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .band-meter-canvas {
+            display: none;
+            width: 11rem;
+            height: 6.5rem;
+            background: #000;
+            border-radius: 6px;
+        }
+
         .canvas-container {
             background: white;
             border-radius: 8px;
@@ -375,6 +466,21 @@
                 <option value="200">200</option>
                 <option value="100">100</option>
             </select>
+            <input type="number" id="freqSelector" class="control-select freq-input" min="20" max="24000" step="10" value="1000" title="Band center frequency (Hz)">
+            <span class="control-label">Hz</span>
+            <span class="control-label icon-label" title="VU meter mode">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+            </span>
+            <select id="vuModeSelect" class="control-select" title="VU meter mode">
+                <option value="">Off</option>
+                <option value="bar">Bar</option>
+                <option value="analog">Analog</option>
+                <option value="dot">LED Dot</option>
+                <option value="radial">Radial</option>
+                <option value="vertical">Vertical</option>
+            </select>
             <button id="toggleAlgo" class="toggle-btn icon-btn active" title="High-Res: Off">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
@@ -484,6 +590,17 @@
             <div class="canvas-label" id="spectrumLabel">Frequency Spectrum - Linear</div>
             <div class="canvas-wrap">
                 <canvas id="spectrumCanvas"></canvas>
+                <div class="band-meter" id="bandMeter" title="VU meter">
+                    <span class="band-meter-label" id="bandMeterLabel">1000 Hz</span>
+                    <div class="band-meter-bar" id="bandMeterBar">
+                        <div class="band-meter-track">
+                            <div class="band-meter-fill" id="bandMeterFill"></div>
+                            <div class="band-meter-peak" id="bandMeterPeak"></div>
+                        </div>
+                        <span class="band-meter-db" id="bandMeterDb">-90 dB</span>
+                    </div>
+                    <canvas id="bandMeterCanvas" class="band-meter-canvas"></canvas>
+                </div>
             </div>
             <div class="fs-tools">
                 <button class="maximize-btn" title="Maximize" aria-label="Maximize">

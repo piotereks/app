@@ -34,6 +34,16 @@ document.addEventListener('DOMContentLoaded', function () {
 	const spectrogramColorsBtn = document.getElementById('toggleSpectrogramColors');
 	const inputGainRange = document.getElementById('inputGainRange');
 	const inputGainLabel = document.getElementById('inputGainLabel');
+	const freqInput = document.getElementById('freqSelector');
+	const vuModeSelect = document.getElementById('vuModeSelect');
+	const bandMeter = document.getElementById('bandMeter');
+	const bandMeterBar = document.getElementById('bandMeterBar');
+	const bandMeterFill = document.getElementById('bandMeterFill');
+	const bandMeterPeak = document.getElementById('bandMeterPeak');
+	const bandMeterDb = document.getElementById('bandMeterDb');
+	const bandMeterLabel = document.getElementById('bandMeterLabel');
+	const bandMeterCanvas = document.getElementById('bandMeterCanvas');
+	const bandMeterCanvasCtx = bandMeterCanvas.getContext('2d');
     
     function resizeCanvases() {
         canvas.width = canvas.offsetWidth;
@@ -201,6 +211,23 @@ document.addEventListener('DOMContentLoaded', function () {
 	const COMPRESSOR_KNEE_DB = 6; // Soft knee width (dB)
 	const COMPRESSOR_ATTACK_S = 0.003; // Limiter attack (s)
 	const COMPRESSOR_RELEASE_S = 0.25; // Limiter release (s)
+	const BAND_LOW_RATIO = 0.5; // Band window lower edge = center freq * this
+	const BAND_HIGH_RATIO = 2; // Band window upper edge = center freq * this
+	const BAND_MIN_FREQ = 20; // Band window lower clamp (Hz)
+	const BAND_FREQ_MIN = 20; // Freq selector clamp (Hz)
+	const BAND_FREQ_MAX = 24000; // Freq selector clamp (Hz)
+	const VU_ATTACK = 0.6; // Band meter rise per frame
+	const VU_DECAY = 0.05; // Band meter fall per frame
+	const VU_PEAK_HOLD_FRAMES = 45; // ~0.75 s peak-hold before the max marker disappears
+	const VU_DB_MIN = -40; // Bottom of the VU scale (dB) for the canvas meters
+	const VU_DB_MAX = 0; // Top of the VU scale (dB) for the canvas meters
+	const VU_MODES = ['bar', 'analog', 'dot', 'radial', 'vertical'];
+	const VU_CANVAS_MODES = ['analog', 'dot', 'radial', 'vertical'];
+	let bandFreqHz = 1000; // Band center frequency (Hz), from the freq selector
+	let vuMode = ''; // VU meter mode: '' (off), 'bar', 'analog'
+	let bandMeterLevel = DB_FLOOR; // Smoothed band level (dB)
+	let bandMeterPeakVal = DB_FLOOR; // Peak-hold for the band meter
+	let bandMeterPeakCooldown = 0; // Frames until the peak marker hides
 	let highResActive = false;
 	let useLightAlgo = true; // High-res off by default
 	let hrFftSize = ANALYSER_FFT_SIZE;
@@ -279,6 +306,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		maxFreqSelect.value = savedMaxFreq;
 		maxFreqHz = savedMaxFreq === '' ? null : parseInt(savedMaxFreq, 10);
 	}
+	const savedBandFreq = loadPref('waSpectrumBandFreq');
+	if (savedBandFreq !== '') {
+		const bandV = parseInt(savedBandFreq, 10);
+		if (!isNaN(bandV)) bandFreqHz = Math.max(BAND_FREQ_MIN, Math.min(BAND_FREQ_MAX, bandV));
+	}
+	const savedVuMode = loadPref('waSpectrumVuMode');
+	if (VU_MODES.indexOf(savedVuMode) >= 0) vuMode = savedVuMode;
 	const savedRecFormat = loadPref('waSpectrumRecFormat');
 	if (savedRecFormat === 'mp3' || savedRecFormat === 'wav') recFormat.value = savedRecFormat;
 	// Mirror restored state onto the UI
@@ -299,6 +333,11 @@ document.addEventListener('DOMContentLoaded', function () {
 	algoBtn.classList.toggle('active', useLightAlgo);
 	spectrogramColorsBtn.title = spectrogramColorMode === SPECTROGRAM_RAINBOW ? 'Colors: Rainbow' : 'Colors: Teal';
 	spectrogramColorsBtn.classList.toggle('active', spectrogramColorMode === SPECTROGRAM_RAINBOW);
+	freqInput.value = String(Math.round(bandFreqHz));
+	bandMeterLabel.textContent = Math.round(bandFreqHz) + ' Hz';
+	vuModeSelect.value = vuMode;
+	applyVuMode();
+	updateBandMeterTitle();
 	updateScaleLabels();
 	if (showOscilloscope) {
 		const modeText = oscilloscopeScaleMode.charAt(0).toUpperCase() + oscilloscopeScaleMode.slice(1);
@@ -394,6 +433,30 @@ document.addEventListener('DOMContentLoaded', function () {
 		maxFreqHz = maxFreqSelect.value ? parseInt(maxFreqSelect.value, 10) : null;
 		applyMaxFreqResolution();
 		savePref('waSpectrumMaxFreq', maxFreqSelect.value);
+	});
+
+	freqInput.addEventListener('input', function () {
+		const v = parseFloat(freqInput.value);
+		if (isNaN(v)) return;
+		bandFreqHz = Math.max(BAND_FREQ_MIN, Math.min(BAND_FREQ_MAX, v));
+		bandMeterLabel.textContent = Math.round(bandFreqHz) + ' Hz';
+		updateBandMeterTitle();
+	});
+
+	freqInput.addEventListener('change', function () {
+		const v = parseFloat(freqInput.value);
+		bandFreqHz = isNaN(v) ? bandFreqHz : Math.max(BAND_FREQ_MIN, Math.min(BAND_FREQ_MAX, v));
+		freqInput.value = String(Math.round(bandFreqHz));
+		bandMeterLabel.textContent = Math.round(bandFreqHz) + ' Hz';
+		updateBandMeterTitle();
+		savePref('waSpectrumBandFreq', String(Math.round(bandFreqHz)));
+	});
+
+	vuModeSelect.addEventListener('change', function () {
+		const v = vuModeSelect.value;
+		vuMode = VU_MODES.indexOf(v) >= 0 ? v : '';
+		savePref('waSpectrumVuMode', vuMode);
+		applyVuMode();
 	});
 
 	algoBtn.addEventListener('click', function () {
@@ -578,6 +641,18 @@ document.addEventListener('DOMContentLoaded', function () {
 	function getMaxFreq() {
 		const nyquist = audioContext.sampleRate / 2;
 		return maxFreqHz === null ? nyquist : Math.min(maxFreqHz, nyquist);
+	}
+
+	function getBandFreqs() {
+		const nyquist = audioContext ? audioContext.sampleRate / 2 : BAND_FREQ_MAX;
+		const low = Math.max(BAND_MIN_FREQ, Math.min(bandFreqHz * BAND_LOW_RATIO, nyquist));
+		const high = Math.min(bandFreqHz * BAND_HIGH_RATIO, nyquist);
+		return { low: Math.min(low, high), high };
+	}
+
+	function updateBandMeterTitle() {
+		const band = getBandFreqs();
+		bandMeter.title = Math.round(bandFreqHz) + ' Hz band (' + Math.round(band.low) + '–' + Math.round(band.high) + ' Hz)';
 	}
 
 	function getAxisMode() {
@@ -1306,6 +1381,322 @@ function drawYAxis(context, width, height, type, phase = 'both', options = {}) {
 		context.restore();
 	}
 
+	function updateBandMeter(liveData) {
+		// Average power (dB) of the bins inside the band around the freq selector,
+		// smoothed with a fast attack / slow decay envelope (VU-style)
+		const band = getBandFreqs();
+		const nyquist = audioContext.sampleRate / 2;
+		const stepHz = highResActive ? getMaxFreq() / bufferLength : nyquist / bufferLength;
+		const lo = Math.max(0, Math.floor(band.low / stepHz));
+		const hi = Math.min(liveData.length, Math.ceil(band.high / stepHz));
+		let sumPower = 0;
+		let count = 0;
+		for (let i = lo; i < hi; i++) {
+			const db = DB_FLOOR + (liveData[i] / 255) * (0 - DB_FLOOR);
+			sumPower += Math.pow(10, db / 10);
+			count++;
+		}
+		let level = DB_FLOOR;
+		if (count > 0) level = 10 * Math.log10(sumPower / count);
+		if (level > bandMeterLevel) {
+			bandMeterLevel += VU_ATTACK * (level - bandMeterLevel);
+		} else {
+			bandMeterLevel += VU_DECAY * (level - bandMeterLevel);
+		}
+		if (level > bandMeterPeakVal) {
+			bandMeterPeakVal = level;
+			bandMeterPeakCooldown = VU_PEAK_HOLD_FRAMES;
+		} else if (bandMeterPeakCooldown > 0) {
+			bandMeterPeakCooldown--;
+			if (bandMeterPeakCooldown === 0) bandMeterPeakVal = DB_FLOOR;
+		}
+		renderBandMeter();
+	}
+
+	function applyVuMode() {
+		bandMeter.classList.toggle('show', vuMode !== '');
+		const canvasMode = VU_CANVAS_MODES.indexOf(vuMode) >= 0;
+		bandMeterBar.style.display = vuMode === 'bar' ? 'flex' : 'none';
+		bandMeterCanvas.style.display = canvasMode ? 'block' : 'none';
+		if (canvasMode) {
+			bandMeterCanvas.width = bandMeterCanvas.offsetWidth;
+			bandMeterCanvas.height = bandMeterCanvas.offsetHeight;
+			drawVuMeter();
+		}
+	}
+
+	function renderBandMeter() {
+		if (vuMode === 'bar') {
+			const range = 0 - DB_FLOOR;
+			const frac = Math.max(0, Math.min(1, (bandMeterLevel - DB_FLOOR) / range));
+			bandMeterFill.style.width = (frac * 100).toFixed(1) + '%';
+			const peakFrac = Math.max(0, Math.min(1, (bandMeterPeakVal - DB_FLOOR) / range));
+			bandMeterPeak.style.left = (peakFrac * 100).toFixed(1) + '%';
+			bandMeterPeak.style.display = bandMeterPeakCooldown > 0 ? 'block' : 'none';
+			bandMeterDb.textContent = Math.round(bandMeterLevel) + ' dB';
+		} else if (VU_CANVAS_MODES.indexOf(vuMode) >= 0) {
+			drawVuMeter();
+		}
+	}
+
+	function drawVuMeter() {
+		if (vuMode === 'analog') drawAnalogMeter();
+		else if (vuMode === 'dot') drawDotMeter();
+		else if (vuMode === 'radial') drawRadialMeter();
+		else if (vuMode === 'vertical') drawVerticalMeter();
+	}
+
+	function vuFrac(dB) {
+		// 0..1 over the VU display range [VU_DB_MIN, VU_DB_MAX]
+		return Math.max(0, Math.min(1, (dB - VU_DB_MIN) / (VU_DB_MAX - VU_DB_MIN)));
+	}
+
+	function drawAnalogMeter() {
+		// Classic stereo-style VU: semicircular dial, needle, colored zones, peak LED
+		const W = bandMeterCanvas.width;
+		const H = bandMeterCanvas.height;
+		if (!W || !H) return;
+		const ctx = bandMeterCanvasCtx;
+		ctx.clearRect(0, 0, W, H);
+		const cx = W / 2;
+		const cy = H * 0.8; // needle pivot (on the flat edge of the semicircle)
+		const r = Math.min(W * 0.46, H * 0.6);
+		const dB_MIN = -40;
+		const dB_MAX = 3;
+		const toAngle = function (dB) {
+			const t = Math.max(0, Math.min(1, (dB - dB_MIN) / (dB_MAX - dB_MIN)));
+			return 1.25 * Math.PI + t * 0.5 * Math.PI; // left → top → right
+		};
+		// Dial face (upper semicircle)
+		const face = ctx.createRadialGradient(cx, cy, r * 0.1, cx, cy, r * 1.1);
+		face.addColorStop(0, '#333');
+		face.addColorStop(1, '#111');
+		ctx.fillStyle = face;
+		ctx.beginPath();
+		ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+		ctx.closePath();
+		ctx.fill();
+		ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+		ctx.stroke();
+		// Colored zones (green / yellow / red)
+		const zones = [[-40, -10, 'rgba(46, 204, 113, 0.35)'], [-10, -3, 'rgba(241, 196, 15, 0.4)'], [-3, 3, 'rgba(231, 76, 60, 0.5)']];
+		for (let i = 0; i < zones.length; i++) {
+			ctx.strokeStyle = zones[i][2];
+			ctx.lineWidth = 6;
+			ctx.beginPath();
+			ctx.arc(cx, cy, r * 0.95, toAngle(zones[i][0]), toAngle(zones[i][1]));
+			ctx.stroke();
+		}
+		// Scale ticks + labels
+		const ticks = [-40, -30, -25, -20, -15, -12, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
+		const majors = [-40, -30, -20, -10, -3, 0, 3];
+		ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+		ctx.lineWidth = 1;
+		ctx.fillStyle = 'rgba(255,255,255,0.85)';
+		ctx.font = '6px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		for (let i = 0; i < ticks.length; i++) {
+			const a = toAngle(ticks[i]);
+			const isMajor = majors.indexOf(ticks[i]) >= 0;
+			const len = isMajor ? 7 : 4;
+			ctx.beginPath();
+			ctx.moveTo(cx + r * 0.97 * Math.cos(a), cy + r * 0.97 * Math.sin(a));
+			ctx.lineTo(cx + (r * 0.97 - len) * Math.cos(a), cy + (r * 0.97 - len) * Math.sin(a));
+			ctx.stroke();
+			if (isMajor) {
+				ctx.fillText(ticks[i] > 0 ? '+' + ticks[i] : String(ticks[i]), cx + r * 0.78 * Math.cos(a), cy + r * 0.78 * Math.sin(a));
+			}
+		}
+		// Brand text
+		ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.fillStyle = 'rgba(255,255,255,0.5)';
+		ctx.fillText('VU', cx, cy - r * 0.52);
+		// Needle
+		const a = toAngle(bandMeterLevel);
+		ctx.strokeStyle = '#ff3b30';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(cx - 5 * Math.cos(a), cy - 5 * Math.sin(a));
+		ctx.lineTo(cx + r * 0.88 * Math.cos(a), cy + r * 0.88 * Math.sin(a));
+		ctx.stroke();
+		// Hub
+		ctx.fillStyle = '#111';
+		ctx.strokeStyle = '#999';
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.arc(cx, cy, 4.5, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.stroke();
+		// Peak LED (lights above -3 dB, holds briefly)
+		const ledOn = bandMeterPeakCooldown > 0 && bandMeterPeakVal > -3;
+		ctx.beginPath();
+		ctx.arc(cx + r * 0.58, cy - r * 0.28, 4, 0, 2 * Math.PI);
+		ctx.fillStyle = ledOn ? '#ff2222' : '#551111';
+		ctx.fill();
+		// dB readout
+		ctx.font = '8px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.fillStyle = '#ddd';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'bottom';
+		ctx.fillText(Math.round(bandMeterLevel) + ' dB', cx, H - 3);
+	}
+
+	function drawDotMeter() {
+		// LED ladder: discrete cells that light up green → yellow → red
+		const W = bandMeterCanvas.width;
+		const H = bandMeterCanvas.height;
+		if (!W || !H) return;
+		const ctx = bandMeterCanvasCtx;
+		ctx.clearRect(0, 0, W, H);
+		const N = 18;
+		const cellW = 7;
+		const gap = 2;
+		const cellH = 22;
+		const x0 = Math.round((W - (N * (cellW + gap) - gap)) / 2);
+		const y0 = Math.round(H / 2 - cellH / 2) - 6;
+		const frac = vuFrac(bandMeterLevel);
+		const lit = Math.round(frac * N);
+		for (let i = 0; i < N; i++) {
+			const x = x0 + i * (cellW + gap);
+			const p = i / N;
+			ctx.fillStyle = i < lit ? (p < 0.6 ? '#2ecc71' : (p < 0.85 ? '#f1c40f' : '#e74c3c')) : '#1e1e1e';
+			ctx.fillRect(x, y0, cellW, cellH);
+			ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+			ctx.lineWidth = 1;
+			ctx.strokeRect(x + 0.5, y0 + 0.5, cellW - 1, cellH - 1);
+		}
+		// Peak cell (white outline, holds briefly)
+		if (bandMeterPeakCooldown > 0) {
+			const pi = Math.min(N - 1, Math.round(vuFrac(bandMeterPeakVal) * N));
+			const px = x0 + pi * (cellW + gap);
+			ctx.strokeStyle = '#fff';
+			ctx.lineWidth = 2;
+			ctx.strokeRect(px + 1, y0 + 1, cellW - 2, cellH - 2);
+		}
+		// dB readout
+		ctx.font = '8px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.fillStyle = '#ddd';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'bottom';
+		ctx.fillText(Math.round(bandMeterLevel) + ' dB', W / 2, H - 4);
+	}
+
+	function drawRadialMeter() {
+		// Ring gauge: colored arc sweeping around a circle, value in the center
+		const W = bandMeterCanvas.width;
+		const H = bandMeterCanvas.height;
+		if (!W || !H) return;
+		const ctx = bandMeterCanvasCtx;
+		ctx.clearRect(0, 0, W, H);
+		const cx = W / 2;
+		const cy = H / 2;
+		const r = Math.min(W, H) / 2 - 18;
+		const startA = 1.25 * Math.PI; // bottom-left
+		const sweep = 1.5 * Math.PI; // 270° through the top
+		const frac = vuFrac(bandMeterLevel);
+		// Background ring
+		ctx.strokeStyle = '#222';
+		ctx.lineWidth = 10;
+		ctx.beginPath();
+		ctx.arc(cx, cy, r, startA, startA + sweep);
+		ctx.stroke();
+		// Colored zone segments up to the level
+		const zones = [[-40, -10, '#2ecc71'], [-10, -3, '#f1c40f'], [-3, 0, '#e74c3c']];
+		ctx.lineCap = 'round';
+		for (let i = 0; i < zones.length; i++) {
+			const zStart = vuFrac(zones[i][0]);
+			const zEnd = vuFrac(zones[i][1]);
+			if (frac <= zStart) break;
+			const a0 = startA + Math.max(zStart, 0) * sweep;
+			const a1 = startA + Math.min(frac, zEnd) * sweep;
+			ctx.strokeStyle = zones[i][2];
+			ctx.beginPath();
+			ctx.arc(cx, cy, r, a0, a1);
+			ctx.stroke();
+		}
+		ctx.lineCap = 'butt';
+		// Tick marks every 10 dB
+		ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+		ctx.lineWidth = 1;
+		for (let dB = -40; dB <= 0; dB += 10) {
+			const a = startA + vuFrac(dB) * sweep;
+			ctx.beginPath();
+			ctx.moveTo(cx + (r - 7) * Math.cos(a), cy + (r - 7) * Math.sin(a));
+			ctx.lineTo(cx + (r + 2) * Math.cos(a), cy + (r + 2) * Math.sin(a));
+			ctx.stroke();
+		}
+		// Peak dot (white, holds briefly)
+		if (bandMeterPeakCooldown > 0) {
+			const a = startA + vuFrac(bandMeterPeakVal) * sweep;
+			ctx.fillStyle = '#fff';
+			ctx.beginPath();
+			ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), 3.5, 0, 2 * Math.PI);
+			ctx.fill();
+		}
+		// Value in the center
+		ctx.fillStyle = '#eee';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.fillText(String(Math.round(bandMeterLevel)), cx, cy - 2);
+		ctx.font = '8px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.fillStyle = '#999';
+		ctx.fillText('dB', cx, cy + 14);
+	}
+
+	function drawVerticalMeter() {
+		// Studio-style vertical bar, fills bottom-up, peak line
+		const W = bandMeterCanvas.width;
+		const H = bandMeterCanvas.height;
+		if (!W || !H) return;
+		const ctx = bandMeterCanvasCtx;
+		ctx.clearRect(0, 0, W, H);
+		const bw = 40; // bar width
+		const bx = Math.round(W / 2 - bw / 2);
+		const by = 8;
+		const bh = H - 24;
+		// Track
+		ctx.fillStyle = '#1e1e1e';
+		ctx.fillRect(bx, by, bw, bh);
+		// Fill (bottom-up), green → yellow → red
+		const frac = vuFrac(bandMeterLevel);
+		const fh = Math.round(frac * bh);
+		if (fh > 0) {
+			const g = ctx.createLinearGradient(0, by + bh, 0, by);
+			g.addColorStop(0, '#2ecc71');
+			g.addColorStop(0.6, '#f1c40f');
+			g.addColorStop(1, '#e74c3c');
+			ctx.fillStyle = g;
+			ctx.fillRect(bx, by + bh - fh, bw, fh);
+		}
+		// Ticks every 10 dB
+		ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+		ctx.lineWidth = 1;
+		for (let dB = -40; dB <= 0; dB += 10) {
+			const y = by + bh - vuFrac(dB) * bh;
+			ctx.beginPath();
+			ctx.moveTo(bx - 4, y + 0.5);
+			ctx.lineTo(bx + bw + 4, y + 0.5);
+			ctx.stroke();
+		}
+		// Peak line (white, holds briefly)
+		if (bandMeterPeakCooldown > 0) {
+			const y = by + bh - vuFrac(bandMeterPeakVal) * bh;
+			ctx.fillStyle = '#fff';
+			ctx.fillRect(bx, y - 1, bw, 2);
+		}
+		// dB readout
+		ctx.font = '8px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+		ctx.fillStyle = '#ddd';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'bottom';
+		ctx.fillText(Math.round(bandMeterLevel) + ' dB', W / 2, H - 3);
+	}
+
 	function drawSpectrum(pushFrame) {
         const WIDTH = canvas.width;
         const HEIGHT = canvas.height;
@@ -1435,6 +1826,7 @@ function drawYAxis(context, width, height, type, phase = 'both', options = {}) {
 			ctx.fillStyle = 'rgb(0, 255, 0)';
 			ctx.fillText(label, boxX + textWidth / 2 + 3, 5);
 		}
+		if (pushFrame && vuMode) updateBandMeter(liveData);
 		drawSpectrogram(liveData, pushFrame);
     }
     

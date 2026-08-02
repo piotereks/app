@@ -85,6 +85,7 @@ The singlepage.html contains a valuable oscilloscope visualization that's missin
 ## Future Features
 
 ### Advanced Audio Analysis
+- [x] Frequency selector with VU meter (Bar, Analog, LED Dot, Radial, Vertical) around a center frequency
 - [ ] Peak frequency detection and labeling
 - [ ] Note detection (musical note identification)
 - [ ] Frequency band analysis (bass, mid, treble levels)
