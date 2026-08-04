@@ -16,45 +16,34 @@ window.commentAll = function() {
         return n;
     };
 
-    const expand = [...document.querySelectorAll(".olx-ban-collapse-bar")]
-        .map(bar => bar.querySelector(".olx-ban-collapse-toggle"))
-        .filter(btn => btn && btn.textContent.trim() === "Expand");
-    expand.forEach(b => b.click());
-    const expandedAt = Date.now();
-
-    const sc = document.scrollingElement || document.documentElement;
-    const startY = sc.scrollTop || window.scrollY || 0;
-
-    const finish = () => {
-        fill();
-        const wait = Math.max(0, 2100 - (Date.now() - expandedAt)) + 100;
-        setTimeout(() => {
-            expand.forEach(b => {
-                const bar = b.closest(".olx-ban-collapse-bar");
-                const btn = bar ? bar.querySelector(".olx-ban-collapse-toggle") : b;
-                if (btn && btn.textContent.trim() === "Collapse") btn.click();
-            });
-            setTimeout(fill, 300);
-        }, wait);
-    };
-
-    let y = startY;
-    let tries = 0;
-    const tick = () => {
-        fill();
-        const maxY = sc.scrollHeight - sc.clientHeight;
-        if (y < maxY && tries < 120) {
-            tries++;
-            y = Math.min(maxY, y + Math.max(600, Math.round(window.innerHeight * 0.7)));
-            window.scrollTo(0, y);
-            setTimeout(tick, 180);
-        } else {
-            window.scrollTo(0, startY);
-            setTimeout(finish, 250);
-        }
+    const clickToggle = (label) => {
+        let n = 0;
+        document.querySelectorAll(".olx-ban-collapse-bar").forEach(bar => {
+            const btn = bar.querySelector(".olx-ban-collapse-toggle");
+            if (btn && btn.textContent.trim() === label) {
+                btn.click();
+                n++;
+            }
+        });
+        return n;
     };
 
     fill();
-    if (sc.scrollHeight > sc.clientHeight) tick();
-    else setTimeout(finish, 300);
+    const start = Date.now();
+    const WAVE_MS = 2300;   // longer than the addon's 2s toggle cooldown
+    const MAX_MS = 12000;   // safety cap
+
+    const wave = () => {
+        const expanded = clickToggle("Expand");
+        fill();
+        if (expanded > 0 && Date.now() - start < MAX_MS) {
+            setTimeout(wave, WAVE_MS);
+        } else {
+            setTimeout(() => {
+                clickToggle("Collapse");
+                setTimeout(fill, 300);
+            }, WAVE_MS);
+        }
+    };
+    wave();
 };
