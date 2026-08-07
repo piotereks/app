@@ -1,0 +1,12 @@
+{
+  "name": "waspectrum-test-shots",
+  "private": true,
+  "description": "Dev-only Playwright harness: renders the app in synthetic mode and captures desktop + mobile screenshots. Not part of the runtime page or gh-pages build.",
+  "scripts": {
+    "shot": "node capture.mjs",
+    "install:browsers": "npx playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

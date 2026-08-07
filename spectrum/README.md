@@ -1,8 +1,8 @@
-# Web Audio Spectrum Analyzer
+# Spectrum Analyzer
 
 A audio spectrum analyzer that visualizes real-time audio input from your microphone using the Web Audio API. This page provides three distinct visualizations to see audio signals in both time and frequency domains.
 
-See demo here: https://deftio.github.io/WebAudioSpectrum
+See demo here: https://piotereks.top/spectrum
 
 For a quick primer on time/frequency domains, FFTs, windowing, and common waveforms, see [AudioSpectra.md](AudioSpectra.md).
 

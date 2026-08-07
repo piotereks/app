@@ -414,7 +414,6 @@
                 </svg>
                 <span>Osc</span>
             </button>
-            <button id="toggleOscilloscopeScale" class="toggle-btn" style="display: none;" title="Oscilloscope scale: Linear">Lin</button>
             <select id="scaleSelect" class="control-select" title="Frequency scale">
                 <option value="linear">Lin</option>
                 <option value="log">Log</option>
@@ -454,6 +453,16 @@
                     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
                 </svg>
                 <span>Colors</span>
+            </button>
+            <button id="toggleSpecFill" class="toggle-btn icon-btn" title="Spectrum fill: Single color">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <path d="M3 15h18"></path>
+                    <path d="M7 8v6"></path>
+                    <path d="M12 7v10"></path>
+                    <path d="M17 9v6"></path>
+                </svg>
+                <span>Fill</span>
             </button>
             <select id="maxFreqSelect" class="control-select" title="Max frequency">
                 <option value="">Full</option>
@@ -550,7 +559,7 @@
         </div>
 
         <div id="oscilloscopeContainer" class="canvas-container" data-fs-key="osc">
-            <div class="canvas-label" id="oscilloscopeLabel">Oscilloscope (Time Domain) - Linear</div>
+            <div class="canvas-label" id="oscilloscopeLabel">Oscilloscope (Time Domain)</div>
             <div class="canvas-wrap">
                 <canvas id="oscilloscopeCanvas"></canvas>
             </div>
@@ -587,7 +596,7 @@
         </div>
 
         <div class="canvas-container" data-fs-key="spec">
-            <div class="canvas-label" id="spectrumLabel">Frequency Spectrum - Linear</div>
+            <div class="canvas-label" id="spectrumLabel">Frequency Spectrum (Hz, dB) - Linear</div>
             <div class="canvas-wrap">
                 <canvas id="spectrumCanvas"></canvas>
                 <div class="band-meter" id="bandMeter" title="VU meter">
@@ -635,7 +644,7 @@
         </div>
 
         <div class="canvas-container" data-fs-key="specgram">
-            <div class="canvas-label" id="spectrogramLabel">Spectrogram (Time-Frequency) - Linear</div>
+            <div class="canvas-label" id="spectrogramLabel">Spectrogram (Hz) - Linear</div>
             <div class="canvas-wrap">
                 <canvas id="spectrogramCanvas"></canvas>
             </div>

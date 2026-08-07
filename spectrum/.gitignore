@@ -5,3 +5,5 @@ node_modules
 *.tgz
 coverage
 CLAUDE.md
+dev/test/node_modules/
+dev/test/shots/

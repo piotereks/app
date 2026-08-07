@@ -31,7 +31,7 @@
 - [ ] Add loading spinner during microphone permission request
 - [ ] Implement user-friendly error messages with recovery suggestions
 - [ ] Add axis labels and frequency markers to canvases
-- [ ] Include decibel scale on spectrum display
+- [x] Include decibel scale on spectrum display
 - [ ] Add time scale to spectrogram
 
 ## Technical Improvements
@@ -108,6 +108,6 @@ The singlepage.html contains a valuable oscilloscope visualization that's missin
 ## Development Workflow Improvements
 - [ ] Add ESLint configuration
 - [x] Implement GitHub Actions for deployment
-- [ ] Add simple test suite for core functionality
+- [x] Add simple test suite for core functionality
 - [ ] Create development server script with hot reload
 - [ ] Add contributing guidelines
