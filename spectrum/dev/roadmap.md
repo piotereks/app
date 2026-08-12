@@ -86,6 +86,7 @@ The singlepage.html contains a valuable oscilloscope visualization that's missin
 
 ### Advanced Audio Analysis
 - [x] Frequency selector with VU meter (Bar, Analog, LED Dot, Radial, Vertical) around a center frequency
+- [x] VU meter extras: EM84 magic-eye mode, Full-range option in dropdown, per-meter fullscreen, responsive sizes, peak-aligned max, band/nyquist info + fullscreen freq input
 - [ ] Peak frequency detection and labeling
 - [ ] Note detection (musical note identification)
 - [ ] Frequency band analysis (bass, mid, treble levels)
