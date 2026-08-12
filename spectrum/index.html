@@ -160,6 +160,88 @@
             vertical-align: middle;
         }
 
+        .freq-range-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .freq-range {
+            position: relative;
+            width: 9.5rem;
+            height: 1.4rem;
+        }
+
+        .freq-range::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            right: 4px;
+            top: 0.6rem;
+            height: 4px;
+            border-radius: 2px;
+            background: #ced4da;
+        }
+
+        .freq-range-input {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0.55rem;
+            width: 100%;
+            height: 0.3rem;
+            margin: 0;
+            background: transparent;
+            -webkit-appearance: none;
+            appearance: none;
+            pointer-events: none;
+            outline: none;
+        }
+
+        .freq-range-input::-webkit-slider-runnable-track {
+            background: transparent;
+        }
+
+        .freq-range-input::-moz-range-track {
+            background: transparent;
+        }
+
+        .freq-range-min {
+            z-index: 2;
+        }
+
+        .freq-range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            pointer-events: auto;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #6c757d;
+            border: 2px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .freq-range-max::-webkit-slider-thumb {
+            background: #007bff;
+        }
+
+        .freq-range-input::-moz-range-thumb {
+            pointer-events: auto;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #6c757d;
+            border: 2px solid #fff;
+            cursor: pointer;
+        }
+
+        .freq-range-max::-moz-range-thumb {
+            background: #007bff;
+        }
+
         .freq-input {
             width: 5rem;
             -moz-appearance: textfield;
@@ -465,17 +547,13 @@
                 </svg>
                 <span>Fill</span>
             </button>
-            <select id="maxFreqSelect" class="control-select" title="Max frequency">
-                <option value="">Full</option>
-                <option value="24000">24k</option>
-                <option value="12000" selected>12k</option>
-                <option value="6000">6k</option>
-                <option value="2000">2k</option>
-                <option value="1000">1k</option>
-                <option value="500">500</option>
-                <option value="200">200</option>
-                <option value="100">100</option>
-            </select>
+            <div class="freq-range-wrap" id="freqRangeWrap" title="Frequency range (octave bands)">
+                <div class="freq-range">
+                    <input type="range" id="minFreqSlider" class="freq-range-input freq-range-min" min="0" max="13" step="1" value="0" title="Min frequency">
+                    <input type="range" id="maxFreqSlider" class="freq-range-input freq-range-max" min="0" max="13" step="1" value="13" title="Max frequency">
+                </div>
+                <span id="freqRangeLabel" class="control-label">0 Hz – 24 kHz</span>
+            </div>
             <input type="number" id="freqSelector" class="control-select freq-input" min="20" max="24000" step="10" value="1000" title="Band center frequency (Hz)">
             <span class="control-label">Hz</span>
             <span class="control-label icon-label" title="VU meter mode">
