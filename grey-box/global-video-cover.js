@@ -9,7 +9,9 @@
 //      bottom gap, borderless, click-through.
 // Toggle: run again -> restores original inline styles.
 // Params at top of script (CFG): h height, g gap, o opacity, c color.
-// Runtime overrides: window.__gvcH / __gvcG / __gvcO / __gvcC.
+// URL params on the script tag: ?box-top=11&box-bottom=5 (numbers = vh).
+//   They set CFG.h = "{box-top}vh" and CFG.g = "{box-bottom}vh".
+// Runtime overrides: window.__gvcH / __gvcG / __gvcO / __gvcC (win over URL).
 // ============================================================
 (() => {
   const COVER_ID = "global-video-cover";
@@ -17,12 +19,32 @@
 
   // ================= PARAMS — edit here =================
   const CFG = {
-    h: "11vh",     // blind height (number = vh, or e.g. "15%"); runtime: window.__gvcH
-    g: "5vh",      // transparent gap below blind; runtime: window.__gvcG
+    h: "11vh",     // blind height (number = vh, or e.g. "15%"); URL: ?box-top=; runtime: window.__gvcH
+    g: "5vh",      // transparent gap below blind; URL: ?box-bottom=; runtime: window.__gvcG
     o: 1,          // blind opacity 0..1 (transparency); runtime: window.__gvcO
     c: "#1a1a1a"   // blind color; runtime: window.__gvcC
   };
   // ======================================================
+
+  // URL params (e.g. global-video-cover.js?box-top=11&box-bottom=5)
+  // override the CFG defaults above; window.__gvc* still wins at runtime.
+  try {
+    let src = (document.currentScript && document.currentScript.src) || "";
+    if (!src) {
+      const scripts = document.getElementsByTagName("script");
+      for (let i = scripts.length - 1; i >= 0; i -= 1) {
+        if (scripts[i].src && scripts[i].src.indexOf("global-video-cover.js") !== -1) {
+          src = scripts[i].src;
+          break;
+        }
+      }
+    }
+    const q = new URL(src, window.location.href).searchParams;
+    const top = parseFloat(q.get("box-top"));
+    if (isFinite(top)) CFG.h = top + "vh";
+    const bottom = parseFloat(q.get("box-bottom"));
+    if (isFinite(bottom)) CFG.g = bottom + "vh";
+  } catch (e) {}
 
   // Toggle OFF: restore every inline style we touched.
   const prev = window[STATE_KEY];
