@@ -47,9 +47,13 @@
   } catch (e) {}
 
   // Toggle OFF: restore every inline style we touched.
+  // Also cancel a pending observer re-apply: disconnect() alone does not
+  // stop an already-scheduled setTimeout, which would otherwise re-apply
+  // right after we restore (2nd click removes then re-applies).
   const prev = window[STATE_KEY];
   if (prev) {
     try { prev.observer.disconnect(); } catch (e) {}
+    try { clearTimeout(prev.timer); } catch (e) {}
     try {
       for (const [el, css] of prev.styles) {
         try { el.style.cssText = css; } catch (e) {}
@@ -224,14 +228,16 @@
   apply();
 
   // Server 1/2/3... switches swap the referential iframe -> re-apply.
-  let timer = null;
+  // The debounce timer lives on the state object so toggle-off can cancel it.
+  const st = { observer: null, styles, timer: null };
   const observer = new MutationObserver(() => {
-    if (timer) return;
-    timer = setTimeout(() => { timer = null; try { apply(); } catch (e) {} }, 300);
+    if (st.timer) return;
+    st.timer = setTimeout(() => { st.timer = null; try { apply(); } catch (e) {} }, 300);
   });
   try {
     observer.observe(document.documentElement, { childList: true, subtree: true });
   } catch (e) {}
 
-  window[STATE_KEY] = { observer, styles };
+  st.observer = observer;
+  window[STATE_KEY] = st;
 })();
